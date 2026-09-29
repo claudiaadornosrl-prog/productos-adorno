@@ -1,0 +1,15 @@
+{
+  "name": "Productos Adorno",
+  "short_name": "Productos",
+  "description": "Ficha por artículo — Claudia Adorno SRL",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0369a1",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192-v2.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512-v2.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

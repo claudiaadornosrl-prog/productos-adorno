@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script>
+// ═══ SESIÓN COMPARTIDA ENTRE MÓDULOS · SSO Adorno (10-sep-2026) ═══
+// Todos los módulos viven en el mismo origen (claudiaadornosrl-prog.github.io),
+// así que pueden compartir la sesión: se guarda bajo la clave 'adorno-auth' en
+// vez de una por módulo. Que un módulo te deje pasar SIN escribir la clave
+// depende de dos marcas, y alcanza con una:
+//   · dispositivo confiable → se tilda UNA vez en el Hub ("Confiar en esta
+//     computadora"). Vale para todos los módulos de ese equipo. Pensado para
+//     la PC de JP; en los locales, que son compartidos, nadie la tilda.
+//   · módulo recordado → ya te habías logueado en ESE módulo con ese mismo
+//     usuario. Conserva el comportamiento de siempre para las vendedoras.
+// Sin ninguna de las dos, el módulo pide usuario y contraseña como antes.
+window.ADORNO_SSO = (function () {
+  var KEY = 'adorno-auth', DEV = 'adorno-equipo-confiable', MOD = 'adorno-modulo-';
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  return {
+    KEY: KEY,
+    // Al estrenar la clave compartida, adopta la sesión que este módulo ya
+    // tenía guardada con su clave vieja: nadie se queda afuera por el cambio.
+    migrar: function (keyVieja, modulo) {
+      if (!keyVieja) return;
+      var v = get(keyVieja);
+      if (!v) return;
+      // La sesión se copia una sola vez; la marca del módulo se pone siempre
+      // que este módulo tuviera sesión propia — Documentos y Compras
+      // compartían la clave por defecto y si no, al segundo le pediría login.
+      if (!get(KEY)) set(KEY, v);
+      var mail = '1';
+      try { mail = (JSON.parse(v).user || {}).email || '1'; } catch (e) {}
+      set(MOD + modulo, String(mail).toLowerCase());
+    },
+    confiable: function () { return get(DEV) === '1'; },
+    confiar: function (si) { si ? set(DEV, '1') : del(DEV); },
+    recordar: function (modulo, email) { set(MOD + modulo, String(email || '1').toLowerCase()); },
+    entraDirecto: function (modulo, email) {
+      if (this.confiable()) return true;
+      var m = get(MOD + modulo);
+      return !!m && (m === '1' || m === String(email || '').toLowerCase());
+    },
+    // Al cerrar sesión se olvidan los módulos, pero NO que el equipo es de
+    // confianza: eso es una propiedad de la computadora, no de la sesión.
+    olvidarModulos: function () {
+      try {
+        Object.keys(localStorage).filter(function (k) { return k.indexOf(MOD) === 0; }).forEach(del);
+      } catch (e) {}
+    }
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0369a1">
+<title>🏷 Productos · Claudia Adorno</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192-v2.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏷%3C/text%3E%3C/svg%3E">
+<style>
+:root { --line: #e2e8f0; --bd: #e2e8f0; --info: #0369a1; }
+.act { background: var(--primary); color: #fff; border: 1px solid var(--primary); border-radius: 7px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.act.gh { background: #fff; color: var(--text); border-color: var(--border); }
+.act:disabled { opacity: .45; cursor: default; }
+.filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.filtros select, .filtros input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 14px; font-family: inherit; }
+.vacio { padding: 30px; text-align: center; color: var(--muted); }
+.alerta { background: var(--red-bg); color: var(--red); padding: 10px 14px; border-radius: 8px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--primary-bg); }
+.thumb { width: 42px; height: 42px; object-fit: cover; border-radius: 6px; background: var(--gray-light); display: block; }
+.thumb.vacia { display: flex; align-items: center; justify-content: center; font-size: 18px; color: #cbd5e1; }
+#ov .box { max-width: 960px; }
+.f-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
+.f-head img { width: 140px; height: 140px; object-fit: cover; border-radius: 10px; background: var(--gray-light); }
+.f-head .sinfoto { width: 140px; height: 140px; border-radius: 10px; background: var(--gray-light); display: flex; align-items: center; justify-content: center; font-size: 40px; color: #cbd5e1; }
+.f-sec { border-top: 1px solid var(--border); padding: 12px 0 4px; }
+.f-sec h4 { margin: 0 0 8px; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+.f-sec h4 .der { margin-left: auto; font-weight: 400; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px 14px; font-size: 13px; }
+.kv b { display: block; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.f-sec table th, .f-sec table td { padding: 6px 9px; font-size: 13px; }
+</style>
+<style>
+@font-face { font-family: 'URW Gothic'; src: url('fonts/URWGothic-Book.ttf') format('truetype'); font-weight: 300 700; font-display: swap; }
+:root { --primary: #0369a1; --primary-dark: #075985; --primary-bg: #e0f2fe; --green:#16a34a; --green-bg:#dcfce7; --amber:#d97706; --amber-bg:#fef3c7;
+        --red:#dc2626; --red-bg:#fee2e2; --gray:#64748b; --gray-light:#f1f5f9; --border:#e2e8f0; --text:#0f172a; --muted:#64748b; }
+* { box-sizing: border-box; }
+body { font-family: 'URW Gothic', -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f8fafc; color: var(--text); }
+#login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
+.login-card { background: white; border-radius: 16px; padding: 32px 28px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.login-card h1 { margin: 0 0 4px; font-size: 24px; color: var(--primary); text-align: center; }
+.login-card .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+.login-card label { font-size: 12px; font-weight: 600; color: var(--muted); display: block; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+.login-card input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; }
+.login-card button { width: 100%; margin-top: 18px; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.login-card button:disabled { opacity: .5; }
+#login-error { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; }
+#app { display: none; }
+header { background: white; border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+header h1 { margin: 0; font-size: 18px; color: var(--primary); }
+header .spacer { flex: 1; } header .user-info { font-size: 13px; color: var(--muted); }
+header button.logout, .btn { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn.danger { color: var(--red); border-color: var(--red); }
+nav.tabs { display: flex; gap: 4px; padding: 8px 20px; background: white; border-bottom: 1px solid var(--border); overflow-x: auto; }
+nav.tabs button { background: transparent; border: none; padding: 10px 16px; font-size: 14px; cursor: pointer; color: var(--muted); border-radius: 8px 8px 0 0; white-space: nowrap; font-family: inherit; }
+nav.tabs button.active { background: var(--primary-bg); color: var(--primary); font-weight: 600; }
+main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+.filters { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.filters label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.filters select, .filters input, .form select, .form input, .form textarea { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 14px; background: white; font-family: inherit; }
+.filters .stat { margin-left: auto; font-size: 13px; color: var(--muted); }
+.tab-content { display: none; } .tab-content.active { display: block; }
+table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+th, td { padding: 9px 12px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border); }
+th { background: var(--gray-light); font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.nivel1 td { background: var(--primary-bg); font-weight: 700; } tr.nivel2 td { background: #f8fafc; font-weight: 600; }
+tr.dim { color: var(--muted); }
+.chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.chip.green { background: var(--green-bg); color: var(--green); } .chip.amber { background: var(--amber-bg); color: var(--amber); }
+.chip.red { background: var(--red-bg); color: var(--red); } .chip.gray { background: var(--gray-light); color: var(--muted); }
+.empty { padding: 50px 20px; text-align: center; color: var(--muted); background: white; border-radius: 10px; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 1000; }
+.toast.error { background: var(--red); } .toast.success { background: var(--green); }
+.card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+.card h3 { margin: 0 0 8px; font-size: 15px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end; }
+.form label { font-size: 12px; color: var(--muted); font-weight: 600; display: flex; flex-direction: column; gap: 4px; }
+.mini { font-size: 12px; color: var(--muted); }
+.prueba { background: #fef3c7; color: #92400e; text-align: center; padding: 4px; font-size: 12px; font-weight: 600; }
+#ov { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
+#ov .box { background: white; border-radius: 12px; padding: 18px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; }
+@media (max-width: 600px) { main { padding: 10px; } th, td { padding: 8px 8px; font-size: 13px; } header h1 { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="login-card">
+    <h1>🏷 Productos</h1>
+    <div class="sub">Una ficha por artículo: stock, precios, juegos y proveedores<br>Claudia Adorno SRL</div>
+    <label>Email</label>
+    <input type="email" id="email" placeholder="tu_email@ejemplo.com" autocomplete="username">
+    <label>Contraseña</label>
+    <input type="password" id="pass" placeholder="••••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()">
+    <button onclick="doLogin()" id="btn-login">Entrar</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+<div id="app">
+  
+  <header>
+    <a href="https://claudiaadornosrl-prog.github.io/hub/" title="Volver al Hub" style="text-decoration:none;font-size:17px;line-height:1;color:inherit;opacity:.65;padding:4px 8px;border-radius:8px;">↩</a>
+    <h1>🏷 Productos · Claudia Adorno</h1>
+    <div class="spacer"></div>
+    <div class="user-info" id="user-info"></div>
+    <button class="logout" onclick="doLogout()">Salir</button>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button id="tab-buscar" class="active" onclick="switchTab('buscar')">🔍 Artículos</button>
+    <button id="tab-juegos" class="" onclick="switchTab('juegos')">🧩 Juegos</button>
+    <button id="tab-sincat" class="" onclick="switchTab('sincat')">🏷 Sin categoría</button>
+  </nav>
+  <main>
+
+    <section id="content-buscar" class="tab-content active">
+      <div class="filters">
+        <input type="search" id="p-busca" placeholder="🔍 SKU, descripción o proveedor…" style="min-width:280px;flex:1"
+               oninput="buscarTexto(this.value)" onkeydown="if(event.key==='Enter') buscarTexto(this.value, true)">
+        <select id="p-filtro" onchange="PROD.filtro=this.value; buscar()">
+          <option value="activos">Activos</option>
+          <option value="todos">Todos (con discontinuados)</option>
+          <option value="juegos">🧩 Juegos (se desglosan)</option>
+          <option value="piezas">🔹 Piezas de un juego</option>
+          <option value="con_equivalencia">🔗 Con equivalencia de proveedor</option>
+          <option value="sin_categoria">🏷 Sin categoría</option>
+          <option value="discontinuados">⛔ Discontinuados</option>
+        </select>
+        <span class="stat" id="p-stat"></span>
+      </div>
+      <div id="p-lista"></div>
+    </section>
+    <section id="content-juegos" class="tab-content">
+      <div id="juegos-card"></div>
+    </section>
+    <section id="content-sincat" class="tab-content">
+      <div class="card">
+        <h3>🏷 Artículos activos sin categoría</h3>
+        <p class="mini">Entran así cuando el alta en el Dragonfish se hace sin completar Nivel 1 / Nivel 2 (grupo y categoría).
+          Se venden igual, pero en el reporte de ventas caen en "SIN GRUPO" y no se pueden medir. Hoy se completan en el
+          Dragonfish (con el importador de altas); más adelante el alta se va a hacer desde este módulo con esos datos obligatorios.</p>
+      </div>
+      <div id="sc-lista"></div>
+    </section>
+
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL  = 'https://kwwiykssrpabncpqtmwi.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2l5a3NzcnBhYm5jcHF0bXdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjI1NTQsImV4cCI6MjA5NDkzODU1NH0.O1VhKdjPahnJJ9qXcQuSKQbnKGhsEZqYmjDEfRuRpkc';
+const MODULO = 'productos';
+ADORNO_SSO.migrar('sb-kwwiykssrpabncpqtmwi-auth-token', MODULO);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: true, autoRefreshToken: true, storageKey: ADORNO_SSO.KEY } });
+(function (mod) {
+  var inOrig = sb.auth.signInWithPassword.bind(sb.auth);
+  sb.auth.signInWithPassword = async function (cred) { var r = await inOrig(cred); if (!r.error && r.data && r.data.user) ADORNO_SSO.recordar(mod, r.data.user.email); return r; };
+  var outOrig = sb.auth.signOut.bind(sb.auth);
+  sb.auth.signOut = async function () {
+    ADORNO_SSO.olvidarModulos();
+    // Salir cierra SOLO este equipo (scope local), no el usuario en todas las PCs.
+    window.__adornoSaliendo = true;
+    return outOrig(arguments[0] || { scope: 'local' });
+  };
+  // Si la sesión se cae sola, avisar y volver al login.
+  var _tuvoSesion = false;
+  sb.auth.onAuthStateChange(function (ev, s) {
+    if (s) { _tuvoSesion = true; return; }
+    if (ev === 'SIGNED_OUT' && _tuvoSesion && !window.__adornoSaliendo) {
+      _tuvoSesion = false;
+      alert('Tu sesión se cerró (venció o alguien salió con este usuario).\nVolvé a ingresar: lo que no guardaste hay que cargarlo de nuevo.');
+      location.reload();
+    }
+  });
+})(MODULO);
+
+// 🧪 AMBIENTE DE PRUEBA: mismo interruptor que Compras (constante). true = solo comprobantes de test.
+// Cuando Compras pase a definitivo, pasar acá también a false.
+const MODO_PRUEBA = true;
+let session = null;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plata = n => (n == null || isNaN(n)) ? '—' : '$ ' + Number(n).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+const plata2 = n => (n == null || isNaN(n)) ? '—' : '$ ' + Number(n).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function hoyAR() { const p = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Argentina/Buenos_Aires', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); return p; }
+function toast(msg, tipo) { const t = document.createElement('div'); t.className = 'toast ' + (tipo || ''); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
+function switchTab(k) {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.id === 'tab-' + k));
+  document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === 'content-' + k));
+  if (typeof onTab === 'function') onTab(k);
+}
+async function doLogin() {
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const pass  = document.getElementById('pass').value;
+  const errEl = document.getElementById('login-error'); errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'Email y contraseña obligatorios'; return; }
+  document.getElementById('btn-login').disabled = true;
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    await entrar(data.user);
+  } catch (e) { errEl.textContent = 'Error: ' + (e.message || 'desconocido'); }
+  finally { document.getElementById('btn-login').disabled = false; }
+}
+async function entrar(user) {
+  const { data: ok } = await sb.rpc('productos_es_usuario');
+  if (!ok) { /* sin signOut: sesión compartida (SSO) */ document.getElementById('login-error').textContent = 'Tu usuario no tiene acceso a este módulo.'; return; }
+  session = { email: user.email, user };
+  document.getElementById('user-info').textContent = user.email;
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  await init();
+}
+async function doLogout() { await sb.auth.signOut(); location.reload(); }
+(async () => {
+  const { data: { session: s } } = await sb.auth.getSession();
+  if (s && ADORNO_SSO.entraDirecto(MODULO, s.user?.email)) await entrar(s.user);
+})();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+
+
+const PROD = { lista: [], busca: '', filtro: 'activos', provs: null, ficha: null, _t: null };
+const fechaCorta = d => { if (!d) return ''; const s = String(d).slice(0, 10).split('-'); return s.length === 3 ? `${s[2]}/${s[1]}/${s[0]}` : String(d); };
+const _n = v => (v == null || v === '') ? '—' : Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+const LOCALES = [['alcorta', 'Alcorta'], ['unicenter', 'Unicenter'], ['oficina', 'Oficina · depósito']];
+
+async function init() {
+  // ?sku=XXX abre la ficha directo (para linkear desde otros módulos)
+  const u = new URLSearchParams(location.search).get('sku');
+  await buscar();
+  if (u) abrirFicha(u);
+}
+function onTab(k) {
+  if (k === 'buscar') buscar();
+  if (k === 'juegos') cargarJuegosCard();
+  if (k === 'sincat') cargarSinCat();
+}
+
+// ── Buscador ──────────────────────────────────────────────────────
+function buscarTexto(v, ya) {
+  clearTimeout(PROD._t);
+  PROD.busca = v;
+  PROD._t = setTimeout(async () => {
+    await buscar();
+    const i = document.getElementById('p-busca');
+    if (i && document.activeElement !== i) { i.focus(); i.setSelectionRange(v.length, v.length); }
+  }, ya ? 0 : 500);
+}
+async function buscar() {
+  const el = document.getElementById('p-lista');
+  el.innerHTML = '<div class="empty">Buscando…</div>';
+  const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: PROD.filtro, p_limite: 300 });
+  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  PROD.lista = data || [];
+  el.innerHTML = tablaProductos(PROD.lista);
+  document.getElementById('p-stat').textContent = PROD.lista.length >= 300
+    ? 'Mostrando los primeros 300 — afiná la búsqueda'
+    : `${PROD.lista.length} artículo${PROD.lista.length === 1 ? '' : 's'}`;
+}
+function chipsProducto(p) {
+  const c = [];
+  if (p.discontinuado) c.push('<span class="chip gray" title="Marcado como discontinuado en el Dragonfish">⛔ discontinuado</span>');
+  if (p.es_juego) c.push('<span class="chip" style="background:#ede9fe;color:#6d28d9" title="Se compra como juego y se vende desglosado">🧩 juego</span>');
+  if (p.es_pieza) c.push('<span class="chip" style="background:#e0f2fe;color:#0369a1" title="Es pieza de un juego">🔹 pieza</span>');
+  if (p.n_equiv > 0) c.push(`<span class="chip green" title="Cómo lo factura el proveedor">🔗 ${p.n_equiv}</span>`);
+  if (p.en_catalogo && !p.discontinuado && (!p.grupo || !p.categoria)) c.push('<span class="chip amber" title="Falta grupo o categoría en el Dragonfish">🏷 sin categoría</span>');
+  return c.join(' ');
+}
+function tablaProductos(lista) {
+  if (!lista.length) return '<div class="empty">No hay artículos con ese criterio.</div>';
+  return `<div style="overflow-x:auto"><table>
+    <thead><tr><th></th><th>SKU</th><th>Descripción</th><th>Proveedor</th><th>Categoría</th>
+      <th class="num" title="Alcorta · Unicenter · Oficina">Stock A · U · O</th><th class="num">Precio venta</th></tr></thead>
+    <tbody>${lista.map(p => `<tr class="clic${p.discontinuado ? ' dim' : ''}" onclick="abrirFicha('${esc(p.sku)}')">
+      <td>${p.foto ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}">` : '<div class="thumb vacia">🖼</div>'}</td>
+      <td><b>${esc(p.sku)}</b></td>
+      <td>${esc(p.descripcion || '')}<div style="margin-top:3px">${chipsProducto(p)}</div></td>
+      <td class="mini">${esc(p.proveedor || '—')}</td>
+      <td class="mini">${[p.grupo, p.categoria, p.clasificacion].filter(Boolean).map(esc).join(' › ') || '—'}</td>
+      <td class="num">${_n(p.stock_alcorta)} · ${_n(p.stock_unicenter)} · ${_n(p.stock_oficina)}</td>
+      <td class="num">${plata(p.precio)}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+// ── Sin categoría ─────────────────────────────────────────────────
+async function cargarSinCat() {
+  const el = document.getElementById('sc-lista');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const { data, error } = await sb.rpc('productos_buscar', { p_busca: null, p_filtro: 'sin_categoria', p_limite: 1000 });
+  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  const l = (data || []).slice().sort((a, b) => (a.proveedor || '').localeCompare(b.proveedor || '') || a.sku.localeCompare(b.sku));
+  if (!l.length) { el.innerHTML = '<div class="empty">✅ Todos los artículos activos tienen categoría (o el catálogo todavía no se sincronizó).</div>'; return; }
+  const porProv = {};
+  l.forEach(p => { const k = p.proveedor || 'Sin proveedor'; porProv[k] = (porProv[k] || 0) + 1; });
+  el.innerHTML = `<div class="card mini"><b>${l.length}</b> artículos · ${Object.entries(porProv).sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .map(([k, v]) => `${esc(k)} <b>${v}</b>`).join(' · ')}</div>` + tablaProductos(l);
+}
+
+// ── Ficha ─────────────────────────────────────────────────────────
+async function abrirFicha(sku) {
+  let ov = document.getElementById('ov');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'ov'; document.body.appendChild(ov); }
+  ov.onclick = e => { if (e.target === ov) cerrarFicha(); };
+  ov.innerHTML = '<div class="box"><div class="empty">Cargando la ficha…</div></div>';
+  const { data, error } = await sb.rpc('productos_ficha', { p_sku: sku });
+  if (error) { ov.innerHTML = `<div class="box"><div class="alerta">${esc(error.message)}</div><button class="btn" onclick="cerrarFicha()">Cerrar</button></div>`; return; }
+  PROD.ficha = data;
+  pintarFicha();
+}
+function cerrarFicha() { document.getElementById('ov')?.remove(); PROD.ficha = null; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && PROD.ficha && !document.getElementById('jg-overlay')) cerrarFicha(); });
+function onJuegoCambio() { if (PROD.ficha) abrirFicha(PROD.ficha.sku); }
+
+function pintarFicha() {
+  const f = PROD.ficha, c = f.catalogo || {}, st = f.stock || [];
+  const desc = c.descripcion || st[0]?.descripcion || '(sin descripción)';
+  const prov = c.proveedor_nombre || st[0]?.proveedor || '—';
+  const disc = c.discontinuado ?? st[0]?.discontinuado;
+  const precioVenta = st.map(s => Number(s.precio || 0)).reduce((a, b) => Math.max(a, b), 0) || null;
+  const nt = Object.fromEntries((f.no_trabaja || []).map(x => [x.local, x]));
+  const ov = document.getElementById('ov');
+  ov.innerHTML = `<div class="box">
+    <div class="f-head">
+      ${f.foto ? `<img src="${esc(f.foto)}">` : '<div class="sinfoto">🖼</div>'}
+      <div style="flex:1;min-width:0">
+        <div class="mini">${esc(prov)}</div>
+        <h2 style="margin:2px 0 4px;font-size:20px">${esc(f.sku)}</h2>
+        <div style="font-size:15px">${esc(desc)}${c.descripcion_adicional ? `<div class="mini">${esc(c.descripcion_adicional)}</div>` : ''}</div>
+        <div style="margin-top:6px">${disc ? '<span class="chip gray">⛔ discontinuado</span> ' : ''}${(f.receta || []).length ? '<span class="chip" style="background:#ede9fe;color:#6d28d9">🧩 juego</span> ' : ''}${(f.pieza_de || []).length ? '<span class="chip" style="background:#e0f2fe;color:#0369a1">🔹 pieza de un juego</span>' : ''}</div>
+      </div>
+      <button class="btn" onclick="cerrarFicha()">✕</button>
+    </div>
+
+    <div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se cambian en el Dragonfish (importador de altas)</span></h4>
+      ${f.catalogo ? `<div class="kv">
+        <div><b>Grupo › Categoría › Clasificación</b>${[c.grupo, c.categoria, c.clasificacion].filter(Boolean).map(esc).join(' › ') || '<span style="color:var(--amber)">🏷 sin categoría</span>'}</div>
+        <div><b>Origen</b>${esc(c.origen || '—')}</div>
+        <div><b>Material</b>${esc(c.material || '—')}</div>
+        <div><b>Unidad</b>${esc(c.unidad_medida || '—')}</div>
+        <div><b>Temporada</b>${esc(c.temporada || '—')}</div>
+        <div><b>Descuento del proveedor</b>${c.descuento_pct != null ? _n(c.descuento_pct) + ' %' : '—'}</div>
+        <div><b>Alta</b>${fechaCorta(c.fecha_alta) || '—'}</div>
+        <div><b>Última modificación</b>${fechaCorta(c.fecha_modif) || '—'}</div>
+      </div>` : '<div class="mini">Todavía no está en el catálogo sincronizado (corre con sync_mercaderia.py).</div>'}
+    </div>
+
+    <div class="f-sec"><h4>📦 Stock y reposición</h4>
+      <table><thead><tr><th>Local</th><th class="num">Stock</th><th class="num">Mínimo</th><th>¿Lo trabaja?</th></tr></thead>
+      <tbody>${LOCALES.map(([k, nom]) => {
+        const s = st.find(x => x.local === k); const min = (f.minimos || {})[k];
+        const bajo = s && min != null && Number(s.stock) < Number(min);
+        const trabaja = k === 'oficina' ? '<span class="mini">—</span>'
+          : nt[k] ? `<span class="chip red" title="${esc(nt[k].motivo || '')}">🚫 no lo trabaja</span> <button class="btn" onclick="volverATrabajar('${k}')">↩</button>`
+          : `<button class="btn" onclick="noTrabaja('${k}')">🚫 No lo trabajamos</button>`;
+        return `<tr><td>${nom}</td><td class="num" style="${bajo ? 'color:var(--red);font-weight:700' : ''}">${s ? _n(s.stock) : '—'}</td>
+          <td class="num">${min != null ? _n(min) : '—'}</td><td>${trabaja}</td></tr>`;
+      }).join('')}</tbody></table>
+    </div>
+
+    <div class="f-sec"><h4>💲 Precios</h4>
+      <div class="kv">
+        <div><b>Venta</b>${plata(precioVenta)}</div>
+        <div><b>Lista COMPRA (proveedor)</b>${plata2(f.precios?.compra)}</div>
+        <div><b>Lista COSTO (con descuento)</b>${plata2(f.precios?.costo)}</div>
+        <div><b>Margen s/ costo</b>${precioVenta && f.precios?.costo ? _n((precioVenta / 1.21 / f.precios.costo - 1) * 100) + ' %' : '—'}</div>
+      </div>
+      ${(f.precios?.historia || []).length ? `<details style="margin-top:6px"><summary class="mini" style="cursor:pointer">Historia de listas</summary>
+        <table style="margin-top:6px"><tbody>${f.precios.historia.map(h => `<tr><td>${fechaCorta(h.fecha)}</td><td>${esc(h.lista)}</td><td class="num">${plata2(h.precio)}</td></tr>`).join('')}</tbody></table></details>` : ''}
+    </div>
+
+    <div class="f-sec"><h4>🧩 Juego / desglose
+        <span class="der">${(f.receta || []).length
+          ? `${f.receta.some(p => !p.confirmado) ? `<button class="act" onclick="confirmarJuego('${esc(f.sku)}')">✔ Confirmar receta</button> ` : ''}<button class="btn" onclick="editarRecetaFicha()">✏️ Editar receta</button>`
+          : (f.pieza_de || []).length ? '' : `<button class="btn" onclick="editarJuego('${esc(f.sku)}', '${esc(f.sku)}')">➕ Se vende desglosado</button>`}</span></h4>
+      ${(f.receta || []).length ? `<p class="mini">El proveedor lo factura como un juego; al entrar se suman también estas piezas${f.receta.some(p => !p.confirmado) ? ' <b style="color:var(--amber)">(receta sin confirmar: todavía no entra al TXT)</b>' : ''}:</p>
+        <table><tbody>${f.receta.map(p => `<tr class="clic" onclick="abrirFicha('${esc(p.sku)}')"><td><b>${_n(p.cantidad)} × ${esc(p.sku)}</b></td><td class="mini">${esc(p.descripcion || '')}</td></tr>`).join('')}</tbody></table>`
+      : (f.pieza_de || []).length ? `<p class="mini">Es una pieza que sale de desglosar:</p>
+        <table><tbody>${f.pieza_de.map(p => `<tr class="clic" onclick="abrirFicha('${esc(p.juego)}')"><td><b>${esc(p.juego)}</b> (${_n(p.cantidad)} por juego)</td><td class="mini">${esc(p.descripcion || '')}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="mini">Se compra y se vende tal cual.</p>'}
+    </div>
+
+    <div class="f-sec"><h4>🔗 Cómo lo factura cada proveedor <span class="der"><button class="btn" onclick="nuevaEquivFicha()">➕ Agregar</button></span></h4>
+      ${(f.equivalencias || []).length ? `<table><thead><tr><th>Proveedor</th><th>Su código</th><th>Su descripción</th><th class="num">Pack</th><th class="num">Usada</th><th></th></tr></thead>
+        <tbody>${f.equivalencias.map(e => `<tr>
+          <td class="mini">${esc(e.proveedor || e.cuit)}</td><td>${esc(e.codigo || '—')}</td><td class="mini">${esc(e.descripcion || '—')}</td>
+          <td class="num">${Number(e.pack || 1) > 1 ? '📦 ×' + _n(e.pack) : '1'}</td>
+          <td class="num mini">${e.veces ? e.veces + '×' : '—'}${e.ultima ? '<br>' + fechaCorta(e.ultima) : ''}</td>
+          <td>${e.partes > 1 ? '<span class="mini" title="Es parte de un set fraccionado: se edita desde Compras → 🔗 Equivalencias">set ×' + e.partes + '</span>'
+                             : `<button class="btn" onclick="borrarEquivFicha(${e.id})" title="Borrar">🗑</button>`}</td></tr>`).join('')}</tbody></table>`
+        : '<p class="mini">Sin equivalencias: el proveedor lo factura con nuestro mismo código, o nunca se cargó cómo lo llama.</p>'}
+      <div id="eq-form"></div>
+    </div>
+
+    <div class="f-sec"><h4>🚚 Últimas entradas</h4>
+      ${(f.ultimas_entradas || []).length ? `<table><thead><tr><th>Fecha</th><th>Remito</th><th>Proveedor</th><th>Destino</th><th class="num">Cant.</th></tr></thead>
+        <tbody>${f.ultimas_entradas.map(r => `<tr><td>${fechaCorta(r.fecha)}</td><td>${esc(r.remito)}</td><td class="mini">${esc(r.proveedor || '—')}</td>
+          <td class="mini">${esc(r.destino || '—')}</td><td class="num">${_n(r.cantidad)}</td></tr>`).join('')}</tbody></table>`
+        : '<p class="mini">Sin remitos registrados.</p>'}
+      ${(f.pedidos_pendientes || []).length ? `<p class="mini" style="margin-top:8px">📝 Pedido y todavía no entregado: ${f.pedidos_pendientes.map(p => `pedido ${p.pedido}${p.prueba ? ' (🧪)' : ''} · ${esc(p.proveedor || '')} · <b>${_n(p.pendiente)}</b>`).join(' · ')}</p>` : ''}
+    </div>
+  </div>`;
+}
+
+function editarRecetaFicha() {
+  const f = PROD.ficha;
+  editarJuego(f.sku, (f.receta || []).map(p => ({ sku: p.sku, cantidad: p.cantidad, descripcion: p.descripcion })));
+}
+
+async function noTrabaja(local) {
+  const motivo = prompt(`¿Por qué en ${local} no se trabaja ${PROD.ficha.sku}? (opcional)\n\nDeja de sugerirse en la redistribución de Stock.`, '');
+  if (motivo === null) return;
+  const { error } = await sb.rpc('stock_marcar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local, p_motivo: motivo || null });
+  if (error) return alert(error.message);
+  abrirFicha(PROD.ficha.sku);
+}
+async function volverATrabajar(local) {
+  if (!confirm(`¿${local} vuelve a trabajar ${PROD.ficha.sku}?`)) return;
+  const { error } = await sb.rpc('stock_quitar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local });
+  if (error) return alert(error.message);
+  abrirFicha(PROD.ficha.sku);
+}
+
+// ── Equivalencias desde la ficha ─────────────────────────────────
+async function cargarProvs() {
+  if (PROD.provs) return PROD.provs;
+  const out = [];
+  for (let desde = 0; desde < 5000; desde += 1000) {
+    const { data, error } = await sb.from('tesoreria_proveedores').select('codigo,nombre,cuit').not('cuit', 'is', null).order('nombre').range(desde, desde + 999);
+    if (error || !data) break;
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  const vistos = new Set();
+  PROD.provs = out.filter(p => { const c = String(p.cuit || '').replace(/\D/g, ''); if (c.length !== 11 || vistos.has(c + p.nombre)) return false; vistos.add(c + p.nombre); return true; });
+  return PROD.provs;
+}
+async function nuevaEquivFicha() {
+  const el = document.getElementById('eq-form');
+  el.innerHTML = '<div class="mini">Cargando proveedores…</div>';
+  const provs = await cargarProvs();
+  el.innerHTML = `<div class="card" style="margin-top:10px">
+    <div class="form">
+      <label>Proveedor<input list="dl-provs" id="eq-prov" placeholder="Escribí el nombre…"></label>
+      <label>Su código<input id="eq-cod" placeholder="como figura en la factura"></label>
+      <label>Su descripción<input id="eq-desc" placeholder="si factura sin código"></label>
+      <label>Unid. por pack<input id="eq-pack" type="number" min="1" step="1" value="1"></label>
+    </div>
+    <datalist id="dl-provs">${provs.map(p => `<option value="${esc(p.nombre)} · ${esc(String(p.cuit).replace(/\D/g, ''))}">`).join('')}</datalist>
+    <p class="mini" style="margin:8px 0">Con código, la equivalencia se busca por el código; sin código, por la descripción. Pack = cuántas unidades
+      nuestras trae 1 unidad del proveedor (PX2 → 2).</p>
+    <button class="act" onclick="guardarEquivFicha()">💾 Guardar</button> <button class="btn" onclick="document.getElementById('eq-form').innerHTML=''">Cancelar</button>
+  </div>`;
+}
+async function guardarEquivFicha() {
+  const v = document.getElementById('eq-prov').value;
+  const cuit = (v.match(/(\d{11})\s*$/) || [])[1];
+  if (!cuit) return alert('Elegí el proveedor de la lista (tiene que terminar con su CUIT).');
+  const cod = document.getElementById('eq-cod').value.trim();
+  const des = document.getElementById('eq-desc').value.trim();
+  const pack = Number(document.getElementById('eq-pack').value || 1);
+  if (!cod && !des) return alert('Poné su código o su descripción.');
+  if (!(pack >= 1) || !Number.isInteger(pack)) return alert('"Unid. por pack" tiene que ser un número entero mayor a 0.');
+  const { error } = await sb.rpc('compras_guardar_equivalencia', { p_cuit: cuit, p_codigo: cod || null, p_descripcion: des || null,
+    p_partes: [{ sku: PROD.ficha.sku, cantidad: pack, proporcion: 1 }] });
+  if (error) return alert('No se pudo guardar: ' + error.message);
+  toast('✓ Equivalencia guardada', 'success');
+  abrirFicha(PROD.ficha.sku);
+}
+async function borrarEquivFicha(id) {
+  if (!confirm('¿Borrar esta equivalencia?\n\nLas facturas nuevas de ese proveedor con ese código van a entrar sin SKU hasta que se vuelva a cargar.')) return;
+  const { error } = await sb.from('compras_equivalencias').delete().eq('id', id);
+  if (error) return alert(error.message);
+  abrirFicha(PROD.ficha.sku);
+}
+
+</script>
+<script src="juegos.js?v=1"></script>
+<script src="manual.js?v=1"></script>
+</body>
+</html>
