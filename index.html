@@ -353,7 +353,7 @@ function tablaProductos(lista) {
   if (!lista.length) return '<div class="empty">No hay artículos con ese criterio.</div>';
   return `<div style="overflow-x:auto"><table>
     <thead><tr><th></th><th>SKU</th><th>Descripción</th><th>Proveedor</th><th>Categoría</th>
-      <th class="num" title="Alcorta · Unicenter · Oficina">Stock A · U · O</th><th class="num">Precio venta</th></tr></thead>
+      <th class="num" title="Alcorta · Unicenter · Oficina" style="white-space:nowrap">Stock<br>A · U · O</th><th class="num">Precio venta</th></tr></thead>
     <tbody>${lista.map(p => `<tr class="clic${p.discontinuado ? ' dim' : ''}" onclick="abrirFicha('${esc(p.sku)}')">
       <td>${p.foto ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}">` : '<div class="thumb vacia">🖼</div>'}</td>
       <td><b>${esc(p.sku)}</b></td>
@@ -558,6 +558,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=4"></script>
+<script src="manual.js?v=5"></script>
 </body>
 </html>
