@@ -10,7 +10,8 @@
 //    lo sube sync_mercaderia.py todas las mañanas).
 // Usa: sb, esc, fechaCorta, _fechaTs, toast (si existe).
 // ════════════════════════════════════════════════════════════════════
-const JG = { recetas: [], pend: [], vista: 'pend', local: '', soloPend: true, busca: '', err: '' };
+// (13-oct-2026, JP) en Productos solo interesa CÓMO se desglosa cada juego; el control por remito queda en Compras
+const JG = { recetas: [], pend: [], vista: 'recetas', local: '', soloPend: true, busca: '', err: '', soloRecetas: true };
 
 const _JG_EST = {
   pendiente: ['⏳ Sin cargar', '#92400e', '#fef3c7', 'El local todavía no cargó el desglose de este remito en el Dragonfish'],
@@ -26,7 +27,7 @@ async function cargarJuegosCard() {
   el.innerHTML = '<div class="card"><span class="mini">🧩 Cargando juegos y desgloses…</span></div>';
   const [r1, r2] = await Promise.all([
     sb.rpc('stock_juegos_listar'),
-    sb.rpc('stock_desgloses_pendientes', { p_desde: null, p_local: null }),
+    JG.soloRecetas ? Promise.resolve({ data: [] }) : sb.rpc('stock_desgloses_pendientes', { p_desde: null, p_local: null }),
   ]);
   JG.err = (r1.error || r2.error) ? (r1.error || r2.error).message : '';
   JG.recetas = r1.data || [];
@@ -51,14 +52,17 @@ function pintarJuegosCard() {
   else cuerpo = _jgHtmlRecetas();
   el.innerHTML = `<div class="card" style="border-left:4px solid #7c3aed">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      <h3 style="font-size:15px;flex:1;min-width:220px">🧩 Juegos que se desglosan</h3>
-      ${tabBtn('pend', `📋 Desgloses por remito${nPend ? ' · ' + nPend : ''}`)}
-      ${tabBtn('recetas', `🧩 Recetas · ${JG.recetas.length}${sinConf ? ' <span style="color:#b45309">(' + sinConf + ' sin confirmar)</span>' : ''}`)}
+      <h3 style="font-size:15px;flex:1;min-width:220px">🧩 Juegos que se desglosan${JG.soloRecetas ? ` <span class="mini" style="font-weight:400">· ${JG.recetas.length} juegos${sinConf ? ' <span style="color:#b45309">(' + sinConf + ' sin confirmar)</span>' : ''}</span>` : ''}</h3>
+      ${JG.soloRecetas ? '' : tabBtn('pend', `📋 Desgloses por remito${nPend ? ' · ' + nPend : ''}`)}
+      ${JG.soloRecetas ? '' : tabBtn('recetas', `🧩 Recetas · ${JG.recetas.length}${sinConf ? ' <span style="color:#b45309">(' + sinConf + ' sin confirmar)</span>' : ''}`)}
     </div>
-    <p class="mini" style="margin-bottom:9px">Artículos que el proveedor factura como <b>juego</b> bajo un solo SKU y que vendemos
+    ${JG.soloRecetas ? `<p class="mini" style="margin-bottom:9px">Artículos que el proveedor factura como <b>juego</b> bajo un solo SKU y que vendemos
+      por separado (ej. SREDO → SREDO + SREDOCH). Cada fila dice en qué piezas se desglosa y cuántas salen de cada juego.
+      El control de qué desglose cargó cada local por remito está en Compras → Mercadería.</p>`
+    : `<p class="mini" style="margin-bottom:9px">Artículos que el proveedor factura como <b>juego</b> bajo un solo SKU y que vendemos
       por separado (ej. SREDO → SREDO + SREDOCH). La <b>receta</b> dice qué piezas salen de cada juego. Los TXT que genera el
       módulo ya las suman solas; para los TXT que manda <b>FGR a los locales</b>, acá se ve qué desglose le toca cargar a cada
-      local y si ya lo cargó en su Dragonfish (movimiento de stock <b>DES</b>, se sincroniza todas las mañanas).</p>
+      local y si ya lo cargó en su Dragonfish (movimiento de stock <b>DES</b>, se sincroniza todas las mañanas).</p>`}
     ${cuerpo}
   </div>`;
 }
