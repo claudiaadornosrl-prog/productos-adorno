@@ -70,6 +70,9 @@ window.ADORNO_SSO = (function () {
 .alerta { background: var(--red-bg); color: var(--red); padding: 10px 14px; border-radius: 8px; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--primary-bg); }
+/* (13-oct, JP) filas alternadas en azul clarito en la lista de artículos */
+#p-lista tbody tr:nth-child(even) td { background: #eef3fb; }
+#p-lista tbody tr.clic:hover td { background: #dbe7fa; }
 .thumb { width: 42px; height: 42px; object-fit: cover; border-radius: 6px; background: var(--gray-light); display: block; }
 .thumb.vacia { display: flex; align-items: center; justify-content: center; font-size: 18px; color: #cbd5e1; }
 #ov .box { max-width: 960px; }
@@ -329,15 +332,20 @@ function buscarTexto(v, ya) {
     if (i && document.activeElement !== i) { i.focus(); i.setSelectionRange(v.length, v.length); }
   }, ya ? 0 : 500);
 }
-async function buscar() {
+// (13-oct, JP) se traen de a 300 para que la página no se ponga pesada (el catálogo tiene más de 5.000 SKU);
+// "Ver más" trae los 300 siguientes sin perder los anteriores.
+async function buscar(mas) {
   const el = document.getElementById('p-lista');
-  el.innerHTML = '<div class="empty">Buscando…</div>';
-  const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: PROD.filtro, p_limite: 300 });
+  PROD.pag = mas ? (PROD.pag || 1) + 1 : 1;
+  if (!mas) el.innerHTML = '<div class="empty">Buscando…</div>';
+  const lim = 300 * PROD.pag;
+  const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: PROD.filtro, p_limite: lim });
   if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
   PROD.lista = data || [];
   el.innerHTML = tablaProductos(PROD.lista);
-  document.getElementById('p-stat').textContent = PROD.lista.length >= 300
-    ? 'Mostrando los primeros 300 — afiná la búsqueda'
+  const st = document.getElementById('p-stat');
+  st.innerHTML = PROD.lista.length >= lim
+    ? `Mostrando ${lim} <button class="btn" style="margin-left:8px;padding:3px 10px;font-size:12px" onclick="buscar(true)">Ver 300 más</button> <span class="mini">o afiná la búsqueda</span>`
     : `${PROD.lista.length} artículo${PROD.lista.length === 1 ? '' : 's'}`;
 }
 function chipsProducto(p) {
@@ -558,6 +566,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=5"></script>
+<script src="manual.js?v=6"></script>
 </body>
 </html>
