@@ -99,15 +99,38 @@ body { font-family: 'URW Gothic', -apple-system, "Segoe UI", Roboto, sans-serif;
 .login-card button:disabled { opacity: .5; }
 #login-error { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; }
 #app { display: none; }
-header { background: white; border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
-header h1 { margin: 0; font-size: 18px; color: var(--primary); }
-header .spacer { flex: 1; } header .user-info { font-size: 13px; color: var(--muted); }
-header button.logout, .btn { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+/* (13-oct-2026, JP) cabecera como la de Compras/Tesorería/Documentos: banner del color del módulo,
+   íconos blancos, el nombre se despliega al pasar el mouse (o queda fijo en la pestaña activa) */
+header { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
+header h1 { margin: 0; font-size: 17px; color: #fff; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+header .user-info { display: none; }
+.ico { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.hbtn { display: flex; align-items: center; height: 34px; padding: 0 7px; border: none; border-radius: 9px; background: transparent; color: #fff; opacity: .85; cursor: pointer; font-family: inherit; font-size: 13px; white-space: nowrap; text-decoration: none; transition: background .15s, opacity .15s; }
+.hbtn:hover { background: rgba(255,255,255,.18); opacity: 1; }
+.hbtn .lb { max-width: 0; overflow: hidden; opacity: 0; margin-left: 0; transition: max-width .25s ease, opacity .18s, margin-left .25s; }
+.hbtn:hover .lb { max-width: 160px; opacity: 1; margin-left: 6px; }
+.hsep { width: 1px; height: 22px; background: rgba(255,255,255,.35); margin: 0 6px; flex: none; }
+.header-right { display: flex; gap: 2px; align-items: center; flex: none; position: relative; }
+.btn { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
 .btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
 .btn.danger { color: var(--red); border-color: var(--red); }
-nav.tabs { display: flex; gap: 4px; padding: 8px 20px; background: white; border-bottom: 1px solid var(--border); overflow-x: auto; }
-nav.tabs button { background: transparent; border: none; padding: 10px 16px; font-size: 14px; cursor: pointer; color: var(--muted); border-radius: 8px 8px 0 0; white-space: nowrap; font-family: inherit; }
-nav.tabs button.active { background: var(--primary-bg); color: var(--primary); font-weight: 600; }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; margin: 0 10px; justify-content: flex-end; align-items: center; scrollbar-width: none; }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs button { display: flex; align-items: center; height: 34px; padding: 0 7px; border: none; border-radius: 9px; background: transparent; color: #fff; opacity: .85; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; transition: background .15s, opacity .15s; }
+nav.tabs button .lb { max-width: 0; overflow: hidden; opacity: 0; margin-left: 0; transition: max-width .25s ease, opacity .18s, margin-left .25s; }
+nav.tabs button:hover .lb, nav.tabs button.active .lb { max-width: 170px; opacity: 1; margin-left: 6px; }
+nav.tabs button:hover { background: rgba(255,255,255,.18); opacity: 1; }
+nav.tabs button.active { background: #fff; color: var(--primary-dark); opacity: 1; font-weight: 700; }
+.kebab-tabs-btn { display: none; }
+@media (max-width: 900px) {
+  .kebab-tabs-btn { display: flex; }
+  nav.tabs { display: none; position: absolute; top: calc(100% + 4px); right: 8px; left: auto; background: white; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.14); flex-direction: column; padding: 6px; z-index: 200; margin: 0; min-width: 210px; overflow: visible; }
+  nav.tabs.open { display: flex; }
+  nav.tabs button { justify-content: flex-start; color: var(--text); opacity: 1; border-left: 3px solid transparent; border-radius: 6px; height: auto; padding: 10px 12px; }
+  nav.tabs button .lb { max-width: none; opacity: 1; margin-left: 8px; }
+  nav.tabs button:hover { background: #fafafa; }
+  nav.tabs button.active { border-left-color: var(--primary); background: var(--primary-bg); color: var(--primary-dark); }
+}
 main { padding: 20px; max-width: 1400px; margin: 0 auto; }
 .filters { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .filters label { font-size: 12px; color: var(--muted); font-weight: 600; }
@@ -153,17 +176,20 @@ tr.dim { color: var(--muted); }
 <div id="app">
   
   <header>
-    <a href="https://claudiaadornosrl-prog.github.io/hub/" title="Volver al Hub" style="text-decoration:none;font-size:17px;line-height:1;color:inherit;opacity:.65;padding:4px 8px;border-radius:8px;">↩</a>
-    <h1>🏷 Productos · Claudia Adorno</h1>
-    <div class="spacer"></div>
-    <div class="user-info" id="user-info"></div>
-    <button class="logout" onclick="doLogout()">Salir</button>
+    <h1><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Productos</h1>
+    <span class="user-info" id="user-info"></span>
+    <nav class="tabs" id="tabs">
+      <button id="tab-buscar" class="active" onclick="switchTab('buscar')" title="Artículos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="lb">Artículos</span></button>
+      <button id="tab-juegos" onclick="switchTab('juegos')" title="Juegos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lb">Juegos</span></button>
+      <button id="tab-sincat" onclick="switchTab('sincat')" title="Sin categoría"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="lb">Sin categoría</span></button>
+    </nav>
+    <div class="header-right">
+      <button class="hbtn kebab-tabs-btn" onclick="toggleTabsMenu(event)" title="Menú" aria-label="Menú"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+      <span class="hsep"></span>
+      <a class="hbtn" href="https://claudiaadornosrl-prog.github.io/hub/" title="Volver al Hub" aria-label="Volver al Hub"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="lb">Hub</span></a>
+      <button class="hbtn" onclick="doLogout()" title="Salir" aria-label="Salir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="lb">Salir</span></button>
+    </div>
   </header>
-  <nav class="tabs" id="tabs">
-    <button id="tab-buscar" class="active" onclick="switchTab('buscar')">🔍 Artículos</button>
-    <button id="tab-juegos" class="" onclick="switchTab('juegos')">🧩 Juegos</button>
-    <button id="tab-sincat" class="" onclick="switchTab('sincat')">🏷 Sin categoría</button>
-  </nav>
   <main>
 
     <section id="content-buscar" class="tab-content active">
@@ -237,7 +263,10 @@ const plata2 = n => (n == null || isNaN(n)) ? '—' : '$ ' + Number(n).toLocaleS
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function hoyAR() { const p = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Argentina/Buenos_Aires', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); return p; }
 function toast(msg, tipo) { const t = document.createElement('div'); t.className = 'toast ' + (tipo || ''); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
+function toggleTabsMenu(ev) { ev.stopPropagation(); document.getElementById('tabs').classList.toggle('open'); }
+document.addEventListener('click', () => document.getElementById('tabs')?.classList.remove('open'));
 function switchTab(k) {
+  document.getElementById('tabs').classList.remove('open');
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.id === 'tab-' + k));
   document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === 'content-' + k));
   if (typeof onTab === 'function') onTab(k);
@@ -529,6 +558,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=1"></script>
-<script src="manual.js?v=1"></script>
+<script src="manual.js?v=2"></script>
 </body>
 </html>
