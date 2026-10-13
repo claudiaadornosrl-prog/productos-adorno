@@ -52,13 +52,11 @@ function pintarJuegosCard() {
   else cuerpo = _jgHtmlRecetas();
   el.innerHTML = `<div class="card" style="border-left:4px solid #7c3aed">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      <h3 style="font-size:15px;flex:1;min-width:220px">🧩 Juegos que se desglosan${JG.soloRecetas ? ` <span class="mini" style="font-weight:400">· ${JG.recetas.length} juegos${sinConf ? ' <span style="color:#b45309">(' + sinConf + ' sin confirmar)</span>' : ''}</span>` : ''}</h3>
+      <h3 style="font-size:15px;flex:1;min-width:220px">🧩 Juegos que se desglosan <span class="mini" style="cursor:help;color:#64748b" title="Artículos que el proveedor factura como juego bajo un solo SKU y que vendemos por separado (ej. SREDO → SREDO + SREDOCH). Cada fila dice en qué piezas se desglosa y cuántas salen de cada juego. Las recetas SIN CONFIRMAR se dedujeron de los desgloses que los locales cargaron en el Dragonfish el último año: sirven para avisar qué desglose falta, pero no entran al TXT hasta que las confirmes (✔). El control de qué desglose cargó cada local por remito está en Compras → Mercadería.">ⓘ</span>${JG.soloRecetas ? ` <span class="mini" style="font-weight:400">· ${JG.recetas.length} juegos${sinConf ? ' <span style="color:#b45309">(' + sinConf + ' sin confirmar)</span>' : ''}</span>` : ''}</h3>
       ${JG.soloRecetas ? '' : tabBtn('pend', `📋 Desgloses por remito${nPend ? ' · ' + nPend : ''}`)}
       ${JG.soloRecetas ? '' : tabBtn('recetas', `🧩 Recetas · ${JG.recetas.length}${sinConf ? ' <span style="color:#b45309">(' + sinConf + ' sin confirmar)</span>' : ''}`)}
     </div>
-    ${JG.soloRecetas ? `<p class="mini" style="margin-bottom:9px">Artículos que el proveedor factura como <b>juego</b> bajo un solo SKU y que vendemos
-      por separado (ej. SREDO → SREDO + SREDOCH). Cada fila dice en qué piezas se desglosa y cuántas salen de cada juego.
-      El control de qué desglose cargó cada local por remito está en Compras → Mercadería.</p>`
+    ${JG.soloRecetas ? ''
     : `<p class="mini" style="margin-bottom:9px">Artículos que el proveedor factura como <b>juego</b> bajo un solo SKU y que vendemos
       por separado (ej. SREDO → SREDO + SREDOCH). La <b>receta</b> dice qué piezas salen de cada juego. Los TXT que genera el
       módulo ya las suman solas; para los TXT que manda <b>FGR a los locales</b>, acá se ve qué desglose le toca cargar a cada
@@ -111,7 +109,7 @@ function _jgHtmlRecetas() {
       <button class="act" style="font-size:12.5px;padding:6px 11px" onclick="editarJuego('')">➕ Nuevo juego</button>
       ${sinConf ? `<button class="act gh" style="font-size:12.5px;padding:6px 11px" onclick="confirmarJuegosTodos()">✔ Confirmar las ${sinConf} deducidas</button>` : ''}
     </div>
-    ${sinConf ? `<p class="mini" style="margin-bottom:8px;color:#92400e">🟡 Las recetas <b>sin confirmar</b> se dedujeron de los desgloses que los
+    ${sinConf && !JG.soloRecetas ? `<p class="mini" style="margin-bottom:8px;color:#92400e">🟡 Las recetas <b>sin confirmar</b> se dedujeron de los desgloses que los
       locales cargaron en el Dragonfish el último año. Ya se usan para avisar qué desglose falta, pero <b>no entran al TXT</b>
       hasta que las confirmes: revisalas y tocá ✔.</p>` : ''}
     <div style="overflow-x:auto"><table>
