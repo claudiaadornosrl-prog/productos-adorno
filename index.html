@@ -371,7 +371,8 @@ async function cargarListasPrecio() {
   PROD.listas = data || [];
   const sel = document.getElementById('p-lista-precio'); if (!sel) return;
   const NOMBRES_LISTA = { COSTO: 'Precio de costo', COMPRA: 'Precio de compra' };
-  const ops = [['PRECIO', 'Precio de venta']].concat(PROD.listas.filter(l => l.lista !== 'PRECIO').map(l => [l.lista, NOMBRES_LISTA[l.lista] || ('Lista ' + l.lista)]));
+  const OCULTAS = ['VENTA'];   // (14-oct, JP) lista vieja del Dragonfish (precios de hace años), no se muestra
+  const ops = [['PRECIO', 'Precio de venta']].concat(PROD.listas.filter(l => l.lista !== 'PRECIO' && !OCULTAS.includes(l.lista)).map(l => [l.lista, NOMBRES_LISTA[l.lista] || ('Lista ' + l.lista)]));
   if (!ops.some(o => o[0] === PROD.listaPrecio)) PROD.listaPrecio = 'PRECIO';
   sel.innerHTML = ops.map(o => `<option value="${esc(o[0])}" ${o[0] === PROD.listaPrecio ? 'selected' : ''}>${esc(o[1])}</option>`).join('');
   sel.style.display = ops.length > 1 ? '' : 'none';   // con una sola lista no hace falta elegir
@@ -680,6 +681,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=5"></script>
-<script src="manual.js?v=14"></script>
+<script src="manual.js?v=15"></script>
 </body>
 </html>
