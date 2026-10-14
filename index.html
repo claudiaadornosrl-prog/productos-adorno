@@ -75,6 +75,11 @@ tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--primary-bg); }
 #p-lista tbody tr.clic:hover td { background: #dbe7fa; }
 .thumb { width: 42px; height: 42px; object-fit: cover; border-radius: 6px; background: var(--gray-light); display: block; }
 /* (13-oct, JP) vistas de la lista de artículos */
+.fchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -6px 0 12px; }
+.fchip { border: 1px solid var(--border); background: white; border-radius: 999px; padding: 4px 11px; font-size: 12px; cursor: pointer; color: var(--muted); font-family: inherit; }
+.fchip:hover { border-color: var(--primary); color: var(--primary); }
+.fchip.on { background: var(--primary); border-color: var(--primary); color: white; font-weight: 600; }
+.fchip.limpiar { border-style: dashed; }
 .vistas { display: inline-flex; gap: 2px; border: 1px solid var(--border); border-radius: 8px; padding: 2px; background: white; }
 .vbtn { border: none; background: transparent; border-radius: 6px; padding: 4px 7px; cursor: pointer; color: var(--muted); display: flex; }
 .vbtn .ico { width: 16px; height: 16px; } .vbtn.on { background: var(--primary-bg); color: var(--primary); }
@@ -224,16 +229,9 @@ tr.dim { color: var(--muted); }
       <div class="filters">
         <input type="search" id="p-busca" placeholder="🔍 SKU, descripción o proveedor…" style="min-width:280px;flex:1"
                oninput="buscarTexto(this.value)" onkeydown="if(event.key==='Enter') buscarTexto(this.value, true)">
-        <select id="p-filtro" onchange="PROD.filtro=this.value; buscar()">
+        <select id="p-filtro" onchange="PROD.filtro=this.value; buscar()" title="Estado">
           <option value="activos">Activos</option>
           <option value="todos">Todos (con discontinuados)</option>
-          <option value="sin_stock">📭 Sin stock en ningún local</option>
-          <option value="stock_negativo">⚠ Con stock negativo</option>
-          <option value="juegos">🧩 Juegos (se desglosan)</option>
-          <option value="piezas">🔹 Piezas de un juego</option>
-          <option value="con_equivalencia">🔗 Con equivalencia de proveedor</option>
-          <option value="sin_categoria">🏷 Sin categoría</option>
-          <option value="sin_ficha">👻 Sin ficha en el catálogo</option>
           <option value="discontinuados">⛔ Discontinuados</option>
         </select>
         <select id="p-lista-precio" title="Qué lista de precios mostrar" onchange="PROD.listaPrecio=this.value; _prodGuardarPref(); pintarLista()"></select>
@@ -243,6 +241,17 @@ tr.dim { color: var(--muted); }
           <button class="vbtn" data-v="tarjetas" onclick="setVista('tarjetas')" title="Tarjetas con foto grande y más datos"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
         </span>
         <span class="stat" id="p-stat"></span>
+      </div>
+      <!-- (13-oct, JP) filtros combinables: se prenden y apagan y se suman entre sí -->
+      <div class="fchips" id="p-fchips">
+        <button class="fchip" data-f="sin_stock" onclick="toggleFiltro('sin_stock')" title="Stock cero o negativo en los tres locales">📭 Sin stock</button>
+        <button class="fchip" data-f="stock_negativo" onclick="toggleFiltro('stock_negativo')" title="Algún local con stock negativo">⚠ Stock negativo</button>
+        <button class="fchip" data-f="juegos" onclick="toggleFiltro('juegos')" title="Se compran como juego y se venden desglosados">🧩 Juegos</button>
+        <button class="fchip" data-f="piezas" onclick="toggleFiltro('piezas')" title="Son pieza de un juego">🔹 Piezas</button>
+        <button class="fchip" data-f="con_equivalencia" onclick="toggleFiltro('con_equivalencia')" title="Tienen código de proveedor equivalente">🔗 Con equivalencia</button>
+        <button class="fchip" data-f="sin_categoria" onclick="toggleFiltro('sin_categoria')" title="Falta grupo o categoría en el Dragonfish">🏷 Sin categoría</button>
+        <button class="fchip" data-f="sin_ficha" onclick="toggleFiltro('sin_ficha')" title="Tienen stock en el Dragonfish pero no ficha en el catálogo">👻 Sin ficha</button>
+        <button class="fchip limpiar" onclick="limpiarFiltros()" style="display:none" title="Sacar todos los filtros">✕ limpiar</button>
       </div>
       <div id="p-lista"></div>
     </section>
@@ -344,6 +353,14 @@ const PROD = { lista: [], busca: '', filtro: 'activos', provs: null, ficha: null
 try { const pf = JSON.parse(localStorage.getItem('productos_pref') || '{}'); if (pf.vista) PROD.vista = pf.vista; if (pf.listaPrecio) PROD.listaPrecio = pf.listaPrecio; } catch (e) {}
 function _prodGuardarPref() { try { localStorage.setItem('productos_pref', JSON.stringify({ vista: PROD.vista, listaPrecio: PROD.listaPrecio })); } catch (e) {} }
 function setVista(v) { PROD.vista = v; _prodGuardarPref(); pintarLista(); }
+PROD.extras = new Set();
+function toggleFiltro(f) { if (PROD.extras.has(f)) PROD.extras.delete(f); else PROD.extras.add(f); _pintarChips(); buscar(); }
+function limpiarFiltros() { PROD.extras.clear(); _pintarChips(); buscar(); }
+function _pintarChips() {
+  document.querySelectorAll('#p-fchips .fchip[data-f]').forEach(b => b.classList.toggle('on', PROD.extras.has(b.dataset.f)));
+  const l = document.querySelector('#p-fchips .limpiar'); if (l) l.style.display = PROD.extras.size ? '' : 'none';
+}
+const _filtroCompleto = () => [PROD.filtro].concat([...PROD.extras]).join(',');
 async function cargarListasPrecio() {
   const { data } = await sb.rpc('productos_listas_precio');
   PROD.listas = data || [];
@@ -403,7 +420,7 @@ async function buscar(mas) {
   PROD.pag = mas ? (PROD.pag || 1) + 1 : 1;
   if (!mas) el.innerHTML = '<div class="empty">Buscando…</div>';
   const lim = 300 * PROD.pag;
-  const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: PROD.filtro, p_limite: lim });
+  const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: _filtroCompleto(), p_limite: lim });
   if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
   PROD.lista = data || [];
   pintarLista();
@@ -658,6 +675,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=8"></script>
+<script src="manual.js?v=9"></script>
 </body>
 </html>
