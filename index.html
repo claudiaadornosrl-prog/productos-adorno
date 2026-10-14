@@ -506,7 +506,6 @@ async function cargarSinCat() {
 async function abrirFicha(sku) {
   let ov = document.getElementById('ov');
   if (!ov) { ov = document.createElement('div'); ov.id = 'ov'; document.body.appendChild(ov); }
-  ov.onclick = e => { if (e.target === ov) cerrarFicha(); };
   ov.innerHTML = '<div class="box"><div class="empty">Cargando la ficha…</div></div>';
   const { data, error } = await sb.rpc('productos_ficha', { p_sku: sku });
   if (error) { ov.innerHTML = `<div class="box"><div class="alerta">${esc(error.message)}</div><button class="btn" onclick="cerrarFicha()">Cerrar</button></div>`; return; }
@@ -680,7 +679,7 @@ async function borrarEquivFicha(id) {
 }
 
 </script>
-<script src="juegos.js?v=4"></script>
-<script src="manual.js?v=13"></script>
+<script src="juegos.js?v=5"></script>
+<script src="manual.js?v=14"></script>
 </body>
 </html>

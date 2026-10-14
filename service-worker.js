@@ -1,5 +1,5 @@
 // Service Worker · network-first para HTML, cache-first para assets
-const CACHE_VERSION = 'productos-v13-ver-mas-abajo';
+const CACHE_VERSION = 'productos-v14-sin-cierre-afuera';
 const CACHE_ASSETS = ['fonts/URWGothic-Book.ttf', './', './index.html', './manual.js', './juegos.js', './manifest.webmanifest'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(CACHE_ASSETS)).catch(err => console.warn('[SW]', err)));
