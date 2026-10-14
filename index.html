@@ -90,8 +90,8 @@ tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--primary-bg); }
 .cat-ult { white-space: nowrap; } .cat-ult .camino { display: none; }
 table.compacta th, table.compacta td { padding: 5px 9px; font-size: 13px; white-space: nowrap; }
 /* (13-oct, JP) en la tabla compacta cada SKU ocupa un solo renglón: descripción y proveedor se cortan con … (texto completo al pasar el mouse) */
-table.compacta td.rec { max-width: 360px; overflow: hidden; text-overflow: ellipsis; }
-table.compacta td.rec.prov { max-width: 170px; }
+table.compacta td.rec { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+table.compacta td.rec.prov { max-width: 140px; }
 table.compacta td .chip { padding: 1px 7px; font-size: 11px; }
 .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
 .tarjeta { background: white; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: box-shadow .15s, transform .1s; }
@@ -680,6 +680,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=11"></script>
+<script src="manual.js?v=12"></script>
 </body>
 </html>
