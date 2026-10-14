@@ -365,7 +365,8 @@ async function cargarListasPrecio() {
   const { data } = await sb.rpc('productos_listas_precio');
   PROD.listas = data || [];
   const sel = document.getElementById('p-lista-precio'); if (!sel) return;
-  const ops = [['PRECIO', 'Precio de venta']].concat(PROD.listas.filter(l => l.lista !== 'PRECIO').map(l => [l.lista, 'Lista ' + l.lista]));
+  const NOMBRES_LISTA = { COSTO: 'Precio de costo', COMPRA: 'Precio de compra' };
+  const ops = [['PRECIO', 'Precio de venta']].concat(PROD.listas.filter(l => l.lista !== 'PRECIO').map(l => [l.lista, NOMBRES_LISTA[l.lista] || ('Lista ' + l.lista)]));
   if (!ops.some(o => o[0] === PROD.listaPrecio)) PROD.listaPrecio = 'PRECIO';
   sel.innerHTML = ops.map(o => `<option value="${esc(o[0])}" ${o[0] === PROD.listaPrecio ? 'selected' : ''}>${esc(o[1])}</option>`).join('');
   sel.style.display = ops.length > 1 ? '' : 'none';   // con una sola lista no hace falta elegir
@@ -443,7 +444,7 @@ function chipsProducto(p) {
 const stk = v => (v == null || v === '') ? '<span class="stk cero">—</span>' : Number(v) < 0 ? `<span class="stk neg">${_n(v)}</span>` : Number(v) === 0 ? '<span class="stk cero">0</span>' : `<span class="stk">${_n(v)}</span>`;
 const catCorta = p => { const c = [p.grupo, p.categoria, p.clasificacion].filter(Boolean); return c.length ? `<span class="cat-ult" title="${esc(c.join(' › '))}">${esc(c[c.length - 1])}</span>` : '—'; };
 const _thOrd = (col, tx, cls) => { const on = PROD.orden.col === col; return `<th class="ord ${cls || ''}" onclick="ordenarLista('${col}')" title="Ordenar por ${tx.replace(/<[^>]+>/g, ' ').trim()}">${tx}${on ? `<span class="flecha">${PROD.orden.dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`; };
-const _tituloPrecio = () => PROD.listaPrecio === 'PRECIO' ? 'Precio venta' : 'Lista ' + esc(PROD.listaPrecio);
+const _tituloPrecio = () => ({ PRECIO: 'Precio venta', COSTO: 'Precio costo', COMPRA: 'Precio compra' })[PROD.listaPrecio] || ('Lista ' + esc(PROD.listaPrecio));
 function tablaProductos(lista) {
   if (!lista.length) return '<div class="empty">No hay artículos con ese criterio.</div>';
   if (PROD.vista === 'tarjetas') return `<div class="tarjetas">${lista.map(p => {
@@ -675,6 +676,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=9"></script>
+<script src="manual.js?v=10"></script>
 </body>
 </html>
