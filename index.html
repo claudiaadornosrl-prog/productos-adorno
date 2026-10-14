@@ -88,7 +88,11 @@ tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--primary-bg); }
 #p-lista td.num, #p-lista th.num { white-space: nowrap; }
 .stk { display: inline-block; min-width: 18px; text-align: right; } .stk.neg { color: var(--red); font-weight: 700; } .stk.cero { color: #b0b7c3; }
 .cat-ult { white-space: nowrap; } .cat-ult .camino { display: none; }
-table.compacta th, table.compacta td { padding: 5px 9px; font-size: 13px; }
+table.compacta th, table.compacta td { padding: 5px 9px; font-size: 13px; white-space: nowrap; }
+/* (13-oct, JP) en la tabla compacta cada SKU ocupa un solo renglón: descripción y proveedor se cortan con … (texto completo al pasar el mouse) */
+table.compacta td.rec { max-width: 360px; overflow: hidden; text-overflow: ellipsis; }
+table.compacta td.rec.prov { max-width: 170px; }
+table.compacta td .chip { padding: 1px 7px; font-size: 11px; }
 .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
 .tarjeta { background: white; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: box-shadow .15s, transform .1s; }
 .tarjeta:hover { box-shadow: 0 6px 18px rgba(0,0,0,.1); transform: translateY(-1px); }
@@ -475,8 +479,8 @@ function tablaProductos(lista) {
     <tbody>${lista.map(p => `<tr class="clic${p.discontinuado ? ' dim' : ''}" onclick="abrirFicha('${esc(p.sku)}')">
       ${compacta ? '' : `<td>${p.foto ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}">` : '<div class="thumb vacia">🖼</div>'}</td>`}
       <td><b>${esc(p.sku)}</b></td>
-      <td>${esc(p.descripcion || '')}${compacta ? ' ' + chipsProducto(p) : `<div style="margin-top:3px">${chipsProducto(p)}</div>`}</td>
-      <td class="mini">${esc(p.proveedor || '—')}</td>
+      <td class="${compacta ? 'rec' : ''}" title="${compacta ? esc(p.descripcion || '') : ''}">${esc(p.descripcion || '')}${compacta ? ' ' + chipsProducto(p) : `<div style="margin-top:3px">${chipsProducto(p)}</div>`}</td>
+      <td class="mini ${compacta ? 'rec prov' : ''}" title="${compacta ? esc(p.proveedor || '') : ''}">${esc(p.proveedor || '—')}</td>
       <td class="mini">${catCorta(p)}</td>
       <td class="num">${stk(p.stock_alcorta)} · ${stk(p.stock_unicenter)} · ${stk(p.stock_oficina)}</td>
       <td class="num">${plata(precioDe(p))}</td>
@@ -676,6 +680,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=10"></script>
+<script src="manual.js?v=11"></script>
 </body>
 </html>
