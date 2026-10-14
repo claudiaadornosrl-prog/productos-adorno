@@ -244,7 +244,6 @@ tr.dim { color: var(--muted); }
           <button class="vbtn" data-v="lista" onclick="setVista('lista')" title="Lista con foto chica"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="5" rx="1"/><rect x="3" y="15" width="5" height="5" rx="1"/><line x1="11" y1="6" x2="21" y2="6"/><line x1="11" y1="17" x2="21" y2="17"/></svg></button>
           <button class="vbtn" data-v="tarjetas" onclick="setVista('tarjetas')" title="Tarjetas con foto grande y más datos"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
         </span>
-        <span class="stat" id="p-stat"></span>
       </div>
       <!-- (13-oct, JP) filtros combinables: se prenden y apagan y se suman entre sí -->
       <div class="fchips" id="p-fchips">
@@ -258,6 +257,8 @@ tr.dim { color: var(--muted); }
         <button class="fchip limpiar" onclick="limpiarFiltros()" style="display:none" title="Sacar todos los filtros">✕ limpiar</button>
       </div>
       <div id="p-lista"></div>
+      <!-- (13-oct, JP) el "Mostrando N · Ver más" va abajo de la tabla para no comer el encabezado -->
+      <div class="stat" id="p-stat" style="text-align:center;padding:12px;font-size:13px;color:var(--muted)"></div>
     </section>
     <section id="content-juegos" class="tab-content">
       <div id="juegos-card"></div>
@@ -431,7 +432,7 @@ async function buscar(mas) {
   pintarLista();
   const st = document.getElementById('p-stat');
   st.innerHTML = PROD.lista.length >= lim
-    ? `Mostrando ${lim} <button class="btn" style="margin-left:8px;padding:3px 10px;font-size:12px" onclick="buscar(true)">Ver 300 más</button> <span class="mini">o afiná la búsqueda</span>`
+    ? `Mostrando los primeros ${lim} <button class="btn" style="margin:0 8px;padding:5px 14px;font-size:13px" onclick="buscar(true)">Ver 300 más</button> <span class="mini">o afiná la búsqueda</span>`
     : `${PROD.lista.length} artículo${PROD.lista.length === 1 ? '' : 's'}`;
 }
 function chipsProducto(p) {
@@ -680,6 +681,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=12"></script>
+<script src="manual.js?v=13"></script>
 </body>
 </html>
