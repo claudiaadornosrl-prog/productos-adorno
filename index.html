@@ -74,6 +74,30 @@ tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--primary-bg); }
 #p-lista tbody tr:nth-child(even) td { background: #eef3fb; }
 #p-lista tbody tr.clic:hover td { background: #dbe7fa; }
 .thumb { width: 42px; height: 42px; object-fit: cover; border-radius: 6px; background: var(--gray-light); display: block; }
+/* (13-oct, JP) vistas de la lista de artículos */
+.vistas { display: inline-flex; gap: 2px; border: 1px solid var(--border); border-radius: 8px; padding: 2px; background: white; }
+.vbtn { border: none; background: transparent; border-radius: 6px; padding: 4px 7px; cursor: pointer; color: var(--muted); display: flex; }
+.vbtn .ico { width: 16px; height: 16px; } .vbtn.on { background: var(--primary-bg); color: var(--primary); }
+#p-lista th.ord { cursor: pointer; user-select: none; white-space: nowrap; } #p-lista th.ord:hover { color: var(--primary); }
+#p-lista th.ord .flecha { font-size: 10px; margin-left: 3px; color: var(--primary); }
+#p-lista td.num, #p-lista th.num { white-space: nowrap; }
+.stk { display: inline-block; min-width: 18px; text-align: right; } .stk.neg { color: var(--red); font-weight: 700; } .stk.cero { color: #b0b7c3; }
+.cat-ult { white-space: nowrap; } .cat-ult .camino { display: none; }
+table.compacta th, table.compacta td { padding: 5px 9px; font-size: 13px; }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.tarjeta { background: white; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: box-shadow .15s, transform .1s; }
+.tarjeta:hover { box-shadow: 0 6px 18px rgba(0,0,0,.1); transform: translateY(-1px); }
+.tarjeta .foto { height: 190px; background: var(--gray-light); display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 34px; }
+.tarjeta .foto img { width: 100%; height: 100%; object-fit: cover; }
+.tarjeta .cuerpo { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+.tarjeta .sku { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+.tarjeta .desc { font-weight: 700; font-size: 14px; line-height: 1.25; }
+.tarjeta .adic { font-size: 12px; color: var(--muted); }
+.tarjeta .datos { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; font-size: 12px; margin-top: 4px; }
+.tarjeta .datos b { color: var(--muted); font-weight: 600; }
+.tarjeta .pie { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 6px; }
+.tarjeta .precio { font-size: 17px; font-weight: 800; color: var(--primary-dark); }
+.tarjeta .stocks { display: flex; gap: 8px; font-size: 12px; } .tarjeta .stocks span { display: flex; flex-direction: column; align-items: center; } .tarjeta .stocks small { color: var(--muted); font-size: 10px; }
 .thumb.vacia { display: flex; align-items: center; justify-content: center; font-size: 18px; color: #cbd5e1; }
 #ov .box { max-width: 960px; }
 .f-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
@@ -202,12 +226,21 @@ tr.dim { color: var(--muted); }
         <select id="p-filtro" onchange="PROD.filtro=this.value; buscar()">
           <option value="activos">Activos</option>
           <option value="todos">Todos (con discontinuados)</option>
+          <option value="sin_stock">📭 Sin stock en ningún local</option>
+          <option value="stock_negativo">⚠ Con stock negativo</option>
           <option value="juegos">🧩 Juegos (se desglosan)</option>
           <option value="piezas">🔹 Piezas de un juego</option>
           <option value="con_equivalencia">🔗 Con equivalencia de proveedor</option>
           <option value="sin_categoria">🏷 Sin categoría</option>
+          <option value="sin_ficha">👻 Sin ficha en el catálogo</option>
           <option value="discontinuados">⛔ Discontinuados</option>
         </select>
+        <select id="p-lista-precio" title="Qué lista de precios mostrar" onchange="PROD.listaPrecio=this.value; _prodGuardarPref(); pintarLista()"></select>
+        <span class="vistas" title="Cómo ver la lista">
+          <button class="vbtn" data-v="tabla" onclick="setVista('tabla')" title="Tabla compacta, sin fotos"><svg class="ico" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+          <button class="vbtn" data-v="lista" onclick="setVista('lista')" title="Lista con foto chica"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="5" rx="1"/><rect x="3" y="15" width="5" height="5" rx="1"/><line x1="11" y1="6" x2="21" y2="6"/><line x1="11" y1="17" x2="21" y2="17"/></svg></button>
+          <button class="vbtn" data-v="tarjetas" onclick="setVista('tarjetas')" title="Tarjetas con foto grande y más datos"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+        </span>
         <span class="stat" id="p-stat"></span>
       </div>
       <div id="p-lista"></div>
@@ -305,7 +338,36 @@ async function doLogout() { await sb.auth.signOut(); location.reload(); }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(() => {});
 
 
-const PROD = { lista: [], busca: '', filtro: 'activos', provs: null, ficha: null, _t: null };
+const PROD = { lista: [], busca: '', filtro: 'activos', provs: null, ficha: null, _t: null,
+  vista: 'lista', listaPrecio: 'PRECIO', orden: { col: '', dir: 1 }, listas: [] };
+try { const pf = JSON.parse(localStorage.getItem('productos_pref') || '{}'); if (pf.vista) PROD.vista = pf.vista; if (pf.listaPrecio) PROD.listaPrecio = pf.listaPrecio; } catch (e) {}
+function _prodGuardarPref() { try { localStorage.setItem('productos_pref', JSON.stringify({ vista: PROD.vista, listaPrecio: PROD.listaPrecio })); } catch (e) {} }
+function setVista(v) { PROD.vista = v; _prodGuardarPref(); pintarLista(); }
+async function cargarListasPrecio() {
+  const { data } = await sb.rpc('productos_listas_precio');
+  PROD.listas = data || [];
+  const sel = document.getElementById('p-lista-precio'); if (!sel) return;
+  const ops = [['PRECIO', 'Precio de venta']].concat(PROD.listas.filter(l => l.lista !== 'PRECIO').map(l => [l.lista, 'Lista ' + l.lista]));
+  if (!ops.some(o => o[0] === PROD.listaPrecio)) PROD.listaPrecio = 'PRECIO';
+  sel.innerHTML = ops.map(o => `<option value="${esc(o[0])}" ${o[0] === PROD.listaPrecio ? 'selected' : ''}>${esc(o[1])}</option>`).join('');
+  sel.style.display = ops.length > 1 ? '' : 'none';   // con una sola lista no hace falta elegir
+}
+const precioDe = p => PROD.listaPrecio === 'PRECIO' ? p.precio : (p.precios && p.precios[PROD.listaPrecio] != null ? p.precios[PROD.listaPrecio] : null);
+function ordenarLista(col) {
+  if (PROD.orden.col === col) PROD.orden.dir = -PROD.orden.dir; else PROD.orden = { col, dir: 1 };
+  pintarLista();
+}
+function _listaOrdenada() {
+  const { col, dir } = PROD.orden; if (!col) return PROD.lista;
+  const val = p => ({ sku: p.sku, descripcion: p.descripcion || '', proveedor: p.proveedor || '', categoria: [p.grupo, p.categoria, p.clasificacion].filter(Boolean).join(' › '),
+    stock: (Number(p.stock_alcorta) || 0) + (Number(p.stock_unicenter) || 0) + (Number(p.stock_oficina) || 0), precio: precioDe(p) == null ? -Infinity : Number(precioDe(p)) })[col];
+  return PROD.lista.slice().sort((a, b) => { const x = val(a), y = val(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es')) * dir; });
+}
+function pintarLista() {
+  const el = document.getElementById('p-lista'); if (!el) return;
+  el.innerHTML = tablaProductos(_listaOrdenada());
+  document.querySelectorAll('.vbtn').forEach(b => b.classList.toggle('on', b.dataset.v === PROD.vista));
+}
 const fechaCorta = d => { if (!d) return ''; const s = String(d).slice(0, 10).split('-'); return s.length === 3 ? `${s[2]}/${s[1]}/${s[0]}` : String(d); };
 const _n = v => (v == null || v === '') ? '—' : Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 });
 const LOCALES = [['alcorta', 'Alcorta'], ['unicenter', 'Unicenter'], ['oficina', 'Oficina · depósito']];
@@ -313,6 +375,7 @@ const LOCALES = [['alcorta', 'Alcorta'], ['unicenter', 'Unicenter'], ['oficina',
 async function init() {
   // ?sku=XXX abre la ficha directo (para linkear desde otros módulos)
   const u = new URLSearchParams(location.search).get('sku');
+  cargarListasPrecio();
   await buscar();
   if (u) abrirFicha(u);
 }
@@ -342,7 +405,7 @@ async function buscar(mas) {
   const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: PROD.filtro, p_limite: lim });
   if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
   PROD.lista = data || [];
-  el.innerHTML = tablaProductos(PROD.lista);
+  pintarLista();
   const st = document.getElementById('p-stat');
   st.innerHTML = PROD.lista.length >= lim
     ? `Mostrando ${lim} <button class="btn" style="margin-left:8px;padding:3px 10px;font-size:12px" onclick="buscar(true)">Ver 300 más</button> <span class="mini">o afiná la búsqueda</span>`
@@ -353,23 +416,51 @@ function chipsProducto(p) {
   if (p.discontinuado) c.push('<span class="chip gray" title="Marcado como discontinuado en el Dragonfish">⛔ discontinuado</span>');
   if (p.es_juego) c.push('<span class="chip" style="background:#ede9fe;color:#6d28d9" title="Se compra como juego y se vende desglosado">🧩 juego</span>');
   if (p.es_pieza) c.push('<span class="chip" style="background:#e0f2fe;color:#0369a1" title="Es pieza de un juego">🔹 pieza</span>');
-  if (p.n_equiv > 0) c.push(`<span class="chip green" title="Cómo lo factura el proveedor">🔗 ${p.n_equiv}</span>`);
+  if (p.n_equiv > 0) c.push(`<span class="chip green" title="${p.n_equiv === 1 ? 'Tiene 1 código de proveedor equivalente (cómo lo factura el proveedor)' : 'Tiene ' + p.n_equiv + ' códigos de proveedor equivalentes (cómo lo factura el proveedor)'}">🔗 ${p.n_equiv}</span>`);
+  if (!p.en_catalogo) c.push('<span class="chip" style="background:#f1f5f9;color:#64748b" title="Existe en el stock del Dragonfish pero no tiene ficha en el catálogo de artículos (sin descripción, proveedor ni categoría)">👻 sin ficha</span>');
   if (p.en_catalogo && !p.discontinuado && (!p.grupo || !p.categoria)) c.push('<span class="chip amber" title="Falta grupo o categoría en el Dragonfish">🏷 sin categoría</span>');
   return c.join(' ');
 }
+// (13-oct, JP) stock: negativo en rojo, cero en gris, sin dato "—"
+const stk = v => (v == null || v === '') ? '<span class="stk cero">—</span>' : Number(v) < 0 ? `<span class="stk neg">${_n(v)}</span>` : Number(v) === 0 ? '<span class="stk cero">0</span>' : `<span class="stk">${_n(v)}</span>`;
+const catCorta = p => { const c = [p.grupo, p.categoria, p.clasificacion].filter(Boolean); return c.length ? `<span class="cat-ult" title="${esc(c.join(' › '))}">${esc(c[c.length - 1])}</span>` : '—'; };
+const _thOrd = (col, tx, cls) => { const on = PROD.orden.col === col; return `<th class="ord ${cls || ''}" onclick="ordenarLista('${col}')" title="Ordenar por ${tx.replace(/<[^>]+>/g, ' ').trim()}">${tx}${on ? `<span class="flecha">${PROD.orden.dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`; };
+const _tituloPrecio = () => PROD.listaPrecio === 'PRECIO' ? 'Precio venta' : 'Lista ' + esc(PROD.listaPrecio);
 function tablaProductos(lista) {
   if (!lista.length) return '<div class="empty">No hay artículos con ese criterio.</div>';
-  return `<div style="overflow-x:auto"><table>
-    <thead><tr><th></th><th>SKU</th><th>Descripción</th><th>Proveedor</th><th>Categoría</th>
-      <th class="num" title="Alcorta · Unicenter · Oficina" style="white-space:nowrap">Stock<br>A · U · O</th><th class="num">Precio venta</th></tr></thead>
+  if (PROD.vista === 'tarjetas') return `<div class="tarjetas">${lista.map(p => {
+    const cat = [p.grupo, p.categoria, p.clasificacion].filter(Boolean).map(esc).join(' › ');
+    return `<div class="tarjeta${p.discontinuado ? ' dim' : ''}" onclick="abrirFicha('${esc(p.sku)}')">
+      <div class="foto">${p.foto ? `<img loading="lazy" src="${esc(p.foto)}">` : '🖼'}</div>
+      <div class="cuerpo">
+        <div class="sku"><b>${esc(p.sku)}</b><span>${chipsProducto(p)}</span></div>
+        <div class="desc">${esc(p.descripcion || '—')}</div>
+        ${p.descripcion_adicional ? `<div class="adic">${esc(p.descripcion_adicional)}</div>` : ''}
+        <div class="datos">
+          ${p.proveedor ? `<b>Proveedor</b><span>${esc(p.proveedor)}</span>` : ''}
+          ${cat ? `<b>Categoría</b><span>${cat}</span>` : ''}
+          ${p.material ? `<b>Material</b><span>${esc(p.material)}</span>` : ''}
+          ${p.origen ? `<b>Origen</b><span>${esc(p.origen)}</span>` : ''}
+          ${p.linea ? `<b>Línea</b><span>${esc(p.linea)}</span>` : ''}
+          ${p.temporada ? `<b>Temporada</b><span>${esc(p.temporada)}</span>` : ''}
+        </div>
+        <div class="pie">
+          <div class="stocks"><span>${stk(p.stock_alcorta)}<small>Alcorta</small></span><span>${stk(p.stock_unicenter)}<small>Unicenter</small></span><span>${stk(p.stock_oficina)}<small>Oficina</small></span></div>
+          <div class="precio" title="${_tituloPrecio()}">${plata(precioDe(p))}</div>
+        </div>
+      </div></div>`; }).join('')}</div>`;
+  const compacta = PROD.vista === 'tabla';
+  return `<div style="overflow-x:auto"><table class="${compacta ? 'compacta' : ''}">
+    <thead><tr>${compacta ? '' : '<th></th>'}${_thOrd('sku', 'SKU')}${_thOrd('descripcion', 'Descripción')}${_thOrd('proveedor', 'Proveedor')}${_thOrd('categoria', 'Categoría')}
+      ${_thOrd('stock', 'Stock<br>A · U · O', 'num')}${_thOrd('precio', _tituloPrecio(), 'num')}</tr></thead>
     <tbody>${lista.map(p => `<tr class="clic${p.discontinuado ? ' dim' : ''}" onclick="abrirFicha('${esc(p.sku)}')">
-      <td>${p.foto ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}">` : '<div class="thumb vacia">🖼</div>'}</td>
+      ${compacta ? '' : `<td>${p.foto ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}">` : '<div class="thumb vacia">🖼</div>'}</td>`}
       <td><b>${esc(p.sku)}</b></td>
-      <td>${esc(p.descripcion || '')}<div style="margin-top:3px">${chipsProducto(p)}</div></td>
+      <td>${esc(p.descripcion || '')}${compacta ? ' ' + chipsProducto(p) : `<div style="margin-top:3px">${chipsProducto(p)}</div>`}</td>
       <td class="mini">${esc(p.proveedor || '—')}</td>
-      <td class="mini">${[p.grupo, p.categoria, p.clasificacion].filter(Boolean).map(esc).join(' › ') || '—'}</td>
-      <td class="num">${_n(p.stock_alcorta)} · ${_n(p.stock_unicenter)} · ${_n(p.stock_oficina)}</td>
-      <td class="num">${plata(p.precio)}</td>
+      <td class="mini">${catCorta(p)}</td>
+      <td class="num">${stk(p.stock_alcorta)} · ${stk(p.stock_unicenter)} · ${stk(p.stock_oficina)}</td>
+      <td class="num">${plata(precioDe(p))}</td>
     </tr>`).join('')}</tbody></table></div>`;
 }
 
@@ -566,6 +657,6 @@ async function borrarEquivFicha(id) {
 
 </script>
 <script src="juegos.js?v=4"></script>
-<script src="manual.js?v=6"></script>
+<script src="manual.js?v=7"></script>
 </body>
 </html>
