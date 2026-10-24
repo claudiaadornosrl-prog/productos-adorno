@@ -117,6 +117,23 @@ table.compacta td .chip { padding: 1px 7px; font-size: 11px; }
 .tarjeta .stocks { display: flex; gap: 8px; font-size: 12px; } .tarjeta .stocks span { display: flex; flex-direction: column; align-items: center; } .tarjeta .stocks small { color: var(--muted); font-size: 10px; }
 .thumb.vacia { display: flex; align-items: center; justify-content: center; font-size: 18px; color: #cbd5e1; }
 #ov .box { max-width: 960px; }
+.ib { border: none; background: transparent; border-radius: 8px; padding: 6px; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-family: inherit; }
+.ib:hover { background: var(--gray-light); color: var(--text); } .ib .ico { width: 20px; height: 20px; }
+.ib.pri { color: var(--primary); } .ib.pri .ico { width: 28px; height: 28px; } .ib.pri:hover { background: var(--primary-bg); }
+.ib.rojo:hover { background: var(--red-bg); color: var(--red); } .ib:disabled { opacity: .35; cursor: default; }
+#ov-alta { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 520; display: flex; align-items: center; justify-content: center; padding: 16px; }
+#ov-alta .box { background: white; border-radius: 12px; padding: 18px; max-width: 860px; width: 100%; max-height: 92vh; overflow: auto; }
+.al-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 12px; align-items: start; }
+.al-form label { font-size: 12px; color: var(--muted); font-weight: 600; display: flex; flex-direction: column; gap: 4px; }
+.al-form label.ancha { grid-column: 1 / -1; } .al-form label.media { grid-column: span 2; }
+.al-form input, .al-form select, .al-form textarea { border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 14px; font-family: inherit; background: white; text-transform: uppercase; }
+.al-form input.libre, .al-form textarea { text-transform: none; } .al-form .req::after { content: " *"; color: var(--red); }
+.al-form .ayuda { font-weight: 400; font-size: 11px; color: var(--muted); } .al-form .ayuda.ok { color: var(--green); } .al-form .ayuda.mal { color: var(--red); }
+.al-sec { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .04em; margin-top: 6px; border-bottom: 1px solid var(--border); padding-bottom: 3px; }
+.al-acc { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.al-acc .guardar { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 14px; cursor: pointer; font-family: inherit; font-weight: 600; }
+.al-acc .guardar.sec { background: var(--primary-bg); color: var(--primary); }
+td.acc { white-space: nowrap; text-align: right; }
 .f-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
 .f-head img { width: 140px; height: 140px; object-fit: cover; border-radius: 10px; background: var(--gray-light); }
 .f-head .sinfoto { width: 140px; height: 140px; border-radius: 10px; background: var(--gray-light); display: flex; align-items: center; justify-content: center; font-size: 40px; color: #cbd5e1; }
@@ -226,6 +243,7 @@ tr.dim { color: var(--muted); }
       <button id="tab-buscar" class="active" onclick="switchTab('buscar')" title="Artículos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="lb">Artículos</span></button>
       <button id="tab-juegos" onclick="switchTab('juegos')" title="Juegos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lb">Juegos</span></button>
       <button id="tab-sincat" onclick="switchTab('sincat')" title="Sin categoría"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="lb">Sin categoría</span></button>
+      <button id="tab-altas" onclick="switchTab('altas')" title="Altas para el Dragonfish"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="lb">Altas</span></button>
     </nav>
     <div class="header-right">
       <button class="hbtn kebab-tabs-btn" onclick="toggleTabsMenu(event)" title="Menú" aria-label="Menú"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
@@ -274,10 +292,25 @@ tr.dim { color: var(--muted); }
       <div class="card">
         <h3>🏷 Artículos activos sin categoría</h3>
         <p class="mini">Entran así cuando el alta en el Dragonfish se hace sin completar Nivel 1 / Nivel 2 (grupo y categoría).
-          Se venden igual, pero en el reporte de ventas caen en "SIN GRUPO" y no se pueden medir. Hoy se completan en el
-          Dragonfish (con el importador de altas); más adelante el alta se va a hacer desde este módulo con esos datos obligatorios.</p>
+          Se venden igual, pero en el reporte de ventas caen en "SIN GRUPO" y no se pueden medir. Para completarlos: abrí la ficha y
+          tocá ✏️ en "Datos del Dragonfish"; el renglón queda en ➕ Altas y sale en el CSV del importador. Las altas nuevas van directo por ➕ Altas.</p>
       </div>
       <div id="sc-lista"></div>
+    </section>
+    <section id="content-altas" class="tab-content">
+      <div class="card">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <h3 style="margin:0;flex:1">➕ Altas y correcciones para el Dragonfish</h3>
+          <button class="ib pri" onclick="abrirAlta()" title="Nuevo artículo: cargar un alta con categoría, origen y material obligatorios" aria-label="Nuevo artículo"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+          <button class="ib" id="al-csv" onclick="exportarAltas()" title="Descargar el CSV para el importador del Dragonfish con todos los borradores" aria-label="Descargar CSV"><svg class="ico" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+        </div>
+        <p class="mini" style="margin:8px 0 0">Acá se cargan los artículos nuevos (y las correcciones de los que ya existen) con <b>Nivel 1 / Nivel 2, origen y material
+          obligatorios</b>. Después, 📥 baja el CSV con el formato del importador de altas del Dragonfish y se importa en la base de Oficina
+          (ADMIN). Si el código ya existe, el renglón sale como <b>modificación</b>; si no, como <b>alta</b>. El sync de la mañana confirma
+          lo que entró (✅).</p>
+      </div>
+      <div id="al-lista"></div>
+      <details style="margin-top:14px"><summary class="mini" style="cursor:pointer" onclick="cargarExportados()">📦 Lotes ya exportados</summary><div id="al-exportados" style="margin-top:8px"></div></details>
     </section>
 
   </main>
@@ -415,6 +448,7 @@ function onTab(k) {
   if (k === 'buscar') buscar();
   if (k === 'juegos') cargarJuegosCard();
   if (k === 'sincat') cargarSinCat();
+  if (k === 'altas') cargarAltas();
 }
 
 // ── Buscador ──────────────────────────────────────────────────────
@@ -544,7 +578,7 @@ function pintarFicha() {
       <button class="btn" onclick="cerrarFicha()">✕</button>
     </div>
 
-    <div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se cambian en el Dragonfish (importador de altas)</span></h4>
+    <div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se corrigen con el importador de altas del Dragonfish${f.catalogo ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</span></h4>
       ${f.catalogo ? `<div class="kv">
         <div><b>Grupo › Categoría › Clasificación</b>${[c.grupo, c.categoria, c.clasificacion].filter(Boolean).map(esc).join(' › ') || '<span style="color:var(--amber)">🏷 sin categoría</span>'}</div>
         <div><b>Origen</b>${esc(c.origen || '—')}</div>
@@ -686,8 +720,215 @@ async function borrarEquivFicha(id) {
   abrirFicha(PROD.ficha.sku);
 }
 
+
+// ── ➕ Altas para el Dragonfish (Fase 2 · 24-oct-2026) ─────────────────
+// Borradores en productos_altas; el CSV sale con el formato del importador (latin1, ';', CRLF).
+const ALTA = { vocab: null, lista: [], edit: null, ultimo: null };
+const CSV_COLS = ['Código', 'Descripción', 'Descripción adicional', 'Proveedor', 'Unidad de medida', 'Temporada', 'Descuento', 'Imagen', 'Origen', 'Material', 'Nivel 1', 'Nivel 2', 'Nivel 3', 'Línea'];
+async function cargarVocab(force) {
+  if (ALTA.vocab && !force) return ALTA.vocab;
+  const { data, error } = await sb.rpc('productos_vocabulario');
+  if (error) { alert('No pude cargar el vocabulario del catálogo: ' + error.message); return null; }
+  ALTA.vocab = data; return data;
+}
+async function cargarAltas() {
+  const el = document.getElementById('al-lista');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const { data, error } = await sb.rpc('productos_altas_listar', { p_estado: 'borrador' });
+  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  ALTA.lista = data || [];
+  const b = document.getElementById('al-csv'); if (b) b.disabled = !ALTA.lista.length;
+  if (!ALTA.lista.length) { el.innerHTML = '<div class="empty">No hay borradores. Tocá ➕ para cargar un artículo nuevo, o ✏️ en la ficha de uno existente para corregirlo.</div>'; return; }
+  el.innerHTML = `<div class="card mini" style="margin-bottom:8px"><b>${ALTA.lista.length}</b> borrador${ALTA.lista.length === 1 ? '' : 'es'} · ${ALTA.lista.filter(a => a.modo === 'alta').length} altas · ${ALTA.lista.filter(a => a.modo === 'modificacion').length} modificaciones</div>` + tablaAltas(ALTA.lista, false);
+}
+function tablaAltas(l, exportados) {
+  return `<div style="overflow-x:auto"><table class="compacta"><thead><tr><th>SKU</th><th>Descripción</th><th>Proveedor</th><th>Nivel 1 › 2 › 3</th><th>Origen · Material</th><th>Tipo</th>${exportados ? '<th>Lote</th><th>En el Dragon</th>' : ''}<th></th></tr></thead>
+    <tbody>${l.map(a => `<tr>
+      <td><b>${esc(a.sku)}</b></td>
+      <td class="rec" title="${esc(a.descripcion_adicional || '')}">${esc(a.descripcion)}${a.notas ? `<div class="mini">📝 ${esc(a.notas)}</div>` : ''}</td>
+      <td class="rec prov" title="${esc(a.proveedor_nombre || '')}">${esc(a.proveedor_nombre || a.proveedor_codigo)}</td>
+      <td>${[a.grupo, a.categoria, a.clasificacion].filter(Boolean).map(esc).join(' › ')}${!a.clasificacion ? ' <span class="chip amber" title="Sin Nivel 3">sin N3</span>' : ''}</td>
+      <td class="mini">${esc(a.origen)} · ${esc(a.material)}</td>
+      <td>${a.modo === 'alta' ? '<span class="chip green">alta</span>' : '<span class="chip" style="background:#e0f2fe;color:#0369a1" title="El código ya existe en el Dragonfish: el importador lo modifica">modificación</span>'}</td>
+      ${exportados ? `<td class="mini">#${a.lote}<br>${fechaCorta(a.exportado_at)}</td><td>${a.en_dragon ? '<span class="chip green" title="El catálogo sincronizado ya muestra estos datos">✅ cargado</span>' : '<span class="chip gray" title="Todavía no se ve en el catálogo (se importa en ADMIN y el sync lo trae a la mañana)">⏳ sin confirmar</span>'}</td>` : ''}
+      <td class="acc">${exportados
+        ? (a.en_dragon ? '' : `<button class="ib" onclick="reabrirAlta(${a.id})" title="Volver a borrador (si el CSV no se llegó a importar)" aria-label="Volver a borrador"><svg class="ico" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`)
+        : `<button class="ib" onclick="abrirAlta(${a.id})" title="Editar" aria-label="Editar"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+           <button class="ib rojo" onclick="borrarAlta(${a.id}, '${esc(a.sku)}')" title="Borrar el borrador" aria-label="Borrar"><svg class="ico" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+async function cargarExportados() {
+  const el = document.getElementById('al-exportados'); if (!el) return;
+  el.innerHTML = '<div class="mini">Cargando…</div>';
+  const { data, error } = await sb.rpc('productos_altas_listar', { p_estado: 'exportado', p_limite: 500 });
+  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  const l = data || [];
+  if (!l.length) { el.innerHTML = '<div class="mini">Todavía no se exportó ningún lote.</div>'; return; }
+  const lotes = [...new Set(l.map(a => a.lote))];
+  el.innerHTML = `<div class="mini" style="margin-bottom:6px">${lotes.map(n => `<button class="fchip" onclick="bajarLote(${n})" title="Volver a bajar el CSV del lote ${n}">📥 lote #${n}</button>`).join(' ')}</div>` + tablaAltas(l, true);
+  ALTA.exportados = l;
+}
+function bajarLote(n) { const filas = (ALTA.exportados || []).filter(a => a.lote === n); if (filas.length) descargarCSV(filas, n); }
+async function reabrirAlta(id) {
+  if (!confirm('¿Volver este renglón a borrador?\n\nSolo si el CSV de ese lote NO se importó en el Dragonfish.')) return;
+  const { error } = await sb.rpc('productos_alta_reabrir', { p_id: id });
+  if (error) return alert(error.message);
+  toast('↩ Vuelto a borrador', 'success'); cargarAltas(); cargarExportados();
+}
+async function borrarAlta(id, sku) {
+  if (!confirm(`¿Borrar el borrador de ${sku}?`)) return;
+  const { error } = await sb.rpc('productos_alta_borrar', { p_id: id });
+  if (error) return alert(error.message);
+  toast('🗑 Borrador borrado'); cargarAltas();
+}
+
+// Formulario (overlay propio: se cierra solo con ✕, Cancelar o Escape)
+async function abrirAlta(id, prefill) {
+  const v = await cargarVocab(); if (!v) return;
+  const a = id ? ALTA.lista.find(x => x.id === id) : null;
+  ALTA.edit = a ? a.id : null;
+  const d = Object.assign({ unidad_medida: 'UN', temporada: 'BOLSA', descuento_pct: '', linea: '1' }, a || prefill || {});
+  let ov = document.getElementById('ov-alta');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'ov-alta'; document.body.appendChild(ov); }
+  const grupos = [...new Set(v.arbol.map(x => x.grupo))];
+  const opt = (arr, sel) => arr.map(x => `<option value="${esc(x)}" ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  ov.innerHTML = `<div class="box">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <h3 style="margin:0;flex:1">${a ? '✏️ Editar borrador' : prefill ? '✏️ Corregir en el Dragonfish' : '➕ Artículo nuevo para el Dragonfish'}</h3>
+      <button class="ib" onclick="cerrarAlta()" title="Cerrar sin guardar" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="al-form">
+      <div class="al-sec">Identidad</div>
+      <label><span class="req">Código (SKU)</span><input id="al-sku" maxlength="15" value="${esc(d.sku || '')}" oninput="chequearSku(this.value)" ${prefill && prefill.sku ? 'readonly' : ''}><span class="ayuda" id="al-sku-ayuda">hasta 15 caracteres</span></label>
+      <label class="media"><span class="req">Descripción</span><input id="al-desc" maxlength="100" value="${esc(d.descripcion || '')}"><span class="ayuda">hasta 100 · como se ve en el ticket</span></label>
+      <label class="media">Descripción adicional<input id="al-adic" maxlength="254" value="${esc(d.descripcion_adicional || '')}"><span class="ayuda">medidas, detalle (opcional)</span></label>
+      <label><span class="req">Proveedor</span><select id="al-prov" onchange="provCambio()"><option value="">— elegir —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}" data-desc="${p.descuento ?? ''}" ${p.codigo === d.proveedor_codigo ? 'selected' : ''}>${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select><span class="ayuda">código ARTFAB del Dragonfish</span></label>
+      <label>Descuento %<input id="al-dto" type="number" min="0" max="100" step="0.5" value="${esc(d.descuento_pct ?? '')}"><span class="ayuda">el pactado con el proveedor</span></label>
+      <label>Unidad<input id="al-um" list="dl-um" maxlength="3" value="${esc(d.unidad_medida || 'UN')}"><datalist id="dl-um">${v.unidades.map(u => `<option value="${esc(u)}">`).join('')}</datalist></label>
+      <label>Temporada<input id="al-temp" maxlength="5" value="${esc(d.temporada || 'BOLSA')}"><span class="ayuda">BOLSA = recargo por bolsa</span></label>
+      <label class="media">Imagen<input id="al-img" class="libre" maxlength="180" placeholder="C:\\FOTOS_PRODUCTOS\\<SKU>.JPG (se completa solo)" value="${esc(d.imagen || '')}"><span class="ayuda">ruta unificada; vacío = C:\\FOTOS_PRODUCTOS\\SKU.JPG</span></label>
+
+      <div class="al-sec">Tipificación · lo que tapa la gotera</div>
+      <label><span class="req">Nivel 1 · ambiente</span><select id="al-grupo" onchange="grupoCambio()"><option value="">— elegir —</option>${opt(grupos, d.grupo)}</select></label>
+      <label><span class="req">Nivel 2 · qué es</span><select id="al-cat" onchange="catCambio()"><option value="">— elegir —</option></select><input id="al-cat-nueva" maxlength="10" placeholder="NOMBRE NUEVO (10 máx.)" style="display:none;margin-top:4px"></label>
+      <label>Nivel 3 · variante<input id="al-cla" list="dl-cla" maxlength="10" value="${esc(d.clasificacion || '')}"><datalist id="dl-cla"></datalist><span class="ayuda" id="al-cla-ayuda">opcional · de la lista</span></label>
+      <label><span class="req">Origen · país</span><input id="al-origen" list="dl-origen" maxlength="10" value="${esc(d.origen || '')}"><datalist id="dl-origen">${v.origenes.map(o => `<option value="${esc(o.v)}">${o.n} artículos</option>`).join('')}</datalist></label>
+      <label><span class="req">Material</span><input id="al-mat" list="dl-mat" maxlength="10" value="${esc(d.material || '')}"><datalist id="dl-mat">${v.materiales.map(o => `<option value="${esc(o.v)}">${o.n} artículos</option>`).join('')}</datalist><span class="ayuda">el principal · sin tildes (ALGODON)</span></label>
+      <label class="ancha" style="flex-direction:row;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="al-nuevo" style="width:auto"> Permitir valores nuevos (un grupo, categoría, origen o material que todavía no existe en el catálogo · solo si va a tener 5 artículos o más)</label>
+      <label class="ancha">Notas internas<input id="al-notas" class="libre" maxlength="200" value="${esc(d.notas || '')}" placeholder="no salen en el CSV"></label>
+    </div>
+    <div class="al-acc">
+      <button class="guardar" onclick="guardarAlta(false)">💾 Guardar</button>
+      ${a || prefill ? '' : '<button class="guardar sec" onclick="guardarAlta(true)" title="Guarda y deja el formulario listo para el siguiente del mismo proveedor y la misma categoría">💾 Guardar y cargar otro</button>'}
+      <button class="btn" onclick="cerrarAlta()">Cancelar</button>
+      <span class="mini" id="al-msg"></span>
+    </div>
+  </div>`;
+  grupoCambio(d.categoria, d.clasificacion);
+  if (!a && !prefill && !d.sku) setTimeout(() => document.getElementById('al-sku')?.focus(), 50);
+  if (d.sku && !a) chequearSku(d.sku);
+}
+function cerrarAlta() { document.getElementById('ov-alta')?.remove(); ALTA.edit = null; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('ov-alta')) { e.stopImmediatePropagation(); cerrarAlta(); } }, true);
+function provCambio() {
+  const s = document.getElementById('al-prov'), o = s.options[s.selectedIndex];
+  const dto = document.getElementById('al-dto');
+  if (o && o.dataset.desc !== '' && o.dataset.desc != null && !dto.value) dto.value = o.dataset.desc;
+}
+function grupoCambio(catSel, claSel) {
+  const g = document.getElementById('al-grupo').value, sel = document.getElementById('al-cat');
+  const cats = ALTA.vocab.arbol.filter(x => x.grupo === g).sort((a, b) => b.n - a.n);
+  sel.innerHTML = '<option value="">— elegir —</option>' + cats.map(c => `<option value="${esc(c.categoria)}" ${c.categoria === catSel ? 'selected' : ''}>${esc(c.categoria)} (${c.n})</option>`).join('') + '<option value="__nueva__">➕ otra (nueva)…</option>';
+  if (catSel && !cats.some(c => c.categoria === catSel)) { sel.value = '__nueva__'; document.getElementById('al-cat-nueva').value = catSel; }
+  catCambio(claSel);
+}
+function catCambio(claSel) {
+  const g = document.getElementById('al-grupo').value, sel = document.getElementById('al-cat'), nueva = document.getElementById('al-cat-nueva');
+  nueva.style.display = sel.value === '__nueva__' ? '' : 'none';
+  if (sel.value === '__nueva__') document.getElementById('al-nuevo').checked = true;
+  const c = ALTA.vocab.arbol.find(x => x.grupo === g && x.categoria === sel.value);
+  const cls = (c ? c.clasificaciones : []).filter(x => x !== 'OTROS');
+  document.getElementById('dl-cla').innerHTML = cls.map(x => `<option value="${esc(x)}">`).join('');
+  document.getElementById('al-cla-ayuda').textContent = cls.length ? 'opcional · ' + cls.slice(0, 8).join(', ') + (cls.length > 8 ? '…' : '') : 'opcional · esta categoría no usa Nivel 3';
+  if (claSel != null) document.getElementById('al-cla').value = claSel;
+  const av = document.getElementById('al-msg');
+  av.textContent = sel.value === 'ACCESORIOS' ? '⚠ ACCESORIOS no dice qué es el producto: si hay una categoría más precisa, mejor.' : '';
+}
+let _skuT = null;
+function chequearSku(v) {
+  clearTimeout(_skuT);
+  const h = document.getElementById('al-sku-ayuda'); const s = (v || '').trim().toUpperCase();
+  if (!s) { h.textContent = 'hasta 15 caracteres'; h.className = 'ayuda'; return; }
+  _skuT = setTimeout(async () => {
+    const { data } = await sb.from('productos_catalogo').select('sku,descripcion,grupo,categoria,clasificacion,origen,material,proveedor_codigo,descripcion_adicional,unidad_medida,temporada,descuento_pct,imagen_ruta').eq('sku', s).maybeSingle();
+    if (data) {
+      h.innerHTML = `ya existe en el Dragonfish (${esc(data.descripcion || '')}) → sale como <b>modificación</b>${ALTA.edit ? '' : ' · <a href="#" onclick="precargarDeCatalogo(); return false">traer sus datos</a>'}`; h.className = 'ayuda mal'; ALTA.ultimo = data;
+    } else { h.textContent = 'código libre → alta nueva'; h.className = 'ayuda ok'; ALTA.ultimo = null; }
+  }, 450);
+}
+function precargarDeCatalogo() {
+  const c = ALTA.ultimo; if (!c) return;
+  const set = (id, v) => { const e = document.getElementById(id); if (e && !e.value) e.value = v || ''; };
+  set('al-desc', c.descripcion); set('al-adic', c.descripcion_adicional); set('al-um', c.unidad_medida); set('al-temp', c.temporada);
+  set('al-dto', c.descuento_pct); set('al-origen', c.origen); set('al-mat', c.material);
+  if (c.proveedor_codigo) document.getElementById('al-prov').value = String(c.proveedor_codigo).trim();
+  if (c.grupo) { document.getElementById('al-grupo').value = c.grupo.trim(); grupoCambio((c.categoria || '').trim(), (c.clasificacion || '').trim()); }
+}
+function corregirDesdeFicha() {
+  const f = PROD.ficha, c = f && f.catalogo; if (!c) return;
+  abrirAlta(null, { sku: f.sku, descripcion: c.descripcion, descripcion_adicional: c.descripcion_adicional, proveedor_codigo: (c.proveedor_codigo || '').trim(),
+    unidad_medida: c.unidad_medida, temporada: c.temporada, descuento_pct: c.descuento_pct, grupo: (c.grupo || '').trim(), categoria: (c.categoria || '').trim(),
+    clasificacion: (c.clasificacion || '').trim(), origen: (c.origen || '').trim(), material: (c.material || '').trim() });
+}
+async function guardarAlta(otro) {
+  const g = id => (document.getElementById(id)?.value ?? '').trim();
+  const catSel = g('al-cat');
+  const p = { id: ALTA.edit, sku: g('al-sku'), descripcion: g('al-desc'), descripcion_adicional: g('al-adic'), proveedor_codigo: g('al-prov'),
+    unidad_medida: g('al-um'), temporada: g('al-temp'), descuento_pct: g('al-dto'), imagen: g('al-img'), grupo: g('al-grupo'),
+    categoria: catSel === '__nueva__' ? g('al-cat-nueva') : catSel, clasificacion: g('al-cla'), origen: g('al-origen'), material: g('al-mat'),
+    notas: g('al-notas'), permitir_nuevo: document.getElementById('al-nuevo').checked };
+  const falta = [['sku', 'el código'], ['descripcion', 'la descripción'], ['proveedor_codigo', 'el proveedor'], ['grupo', 'el Nivel 1'], ['categoria', 'el Nivel 2'], ['origen', 'el origen'], ['material', 'el material']].filter(([k]) => !p[k]);
+  if (falta.length) return alert('Falta ' + falta.map(x => x[1]).join(', ') + '.');
+  const m = document.getElementById('al-msg'); m.textContent = 'Guardando…';
+  const { data, error } = await sb.rpc('productos_alta_guardar', { p });
+  if (error) { m.textContent = ''; return alert(error.message); }
+  toast(`✓ ${data.sku} guardado como ${data.modo}${(data.avisos || []).length ? ' · ' + data.avisos.join(' ') : ''}`, 'success');
+  if (PROD.ficha && PROD.ficha.sku === data.sku) { /* la ficha no cambia hasta que se importe */ }
+  if (otro) {
+    ['al-sku', 'al-desc', 'al-adic', 'al-img', 'al-notas', 'al-cla'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+    document.getElementById('al-sku-ayuda').textContent = 'hasta 15 caracteres'; document.getElementById('al-sku-ayuda').className = 'ayuda';
+    m.textContent = `✓ ${data.sku} guardado. Siguiente…`; document.getElementById('al-sku').focus();
+  } else cerrarAlta();
+  if (document.getElementById('content-altas').classList.contains('active')) cargarAltas();
+}
+
+// CSV del importador: latin1 (ISO-8859-1), ';' y CRLF, mismas 14 columnas que exporta el Dragonfish
+function _csvCampo(v) { v = v == null ? '' : String(v); return /[;"\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function _num(v) { const n = Number(v); return isNaN(n) ? '' : (Number.isInteger(n) ? String(n) : String(n).replace('.', ',')); }
+function filaCSV(a) {
+  return [a.sku, a.descripcion, a.descripcion_adicional, a.proveedor_codigo, a.unidad_medida, a.temporada, _num(a.descuento_pct), a.imagen, a.origen, a.material, a.grupo, a.categoria, a.clasificacion, a.linea].map(_csvCampo).join(';');
+}
+function descargarCSV(filas, lote) {
+  const txt = [CSV_COLS.join(';')].concat(filas.map(filaCSV)).join('\r\n') + '\r\n';
+  const out = new Uint8Array(txt.length);
+  for (let i = 0; i < txt.length; i++) { const c = txt.charCodeAt(i); out[i] = c <= 255 ? c : 63; }
+  const blob = new Blob([out], { type: 'text/csv;charset=iso-8859-1' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `alta art ${hoyAR()} lote ${lote}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function exportarAltas() {
+  if (!ALTA.lista.length) return;
+  const n = ALTA.lista.length;
+  if (!confirm(`Se arma el CSV con ${n} renglón${n === 1 ? '' : 'es'} y quedan marcados como exportados.\n\nDespués hay que importarlo en el Dragonfish de Oficina (ADMIN) con el importador de altas.\n¿Seguimos?`)) return;
+  const { data, error } = await sb.rpc('productos_altas_exportar', { p_ids: ALTA.lista.map(a => a.id) });
+  if (error) return alert(error.message);
+  descargarCSV(data.filas || [], data.lote);
+  toast(`📥 Lote #${data.lote}: ${(data.filas || []).length} renglones`, 'success');
+  cargarAltas(); cargarExportados();
+}
 </script>
 <script src="juegos.js?v=5"></script>
-<script src="manual.js?v=15"></script>
+<script src="manual.js?v=16"></script>
 </body>
 </html>

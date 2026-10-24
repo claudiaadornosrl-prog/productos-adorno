@@ -59,7 +59,20 @@ function _manualSecciones() {
       icon: '🏷', titulo: 'Sin categoría',
       desc: 'Artículos activos a los que les falta grupo o categoría en el Dragonfish.',
       pasos: [
-        'Se venden igual, pero en el reporte de ventas caen en "SIN GRUPO". La lista los agrupa por proveedor para completarlos por tandas con el importador del Dragonfish.',
+        'Se venden igual, pero en el reporte de ventas caen en "SIN GRUPO". La lista los agrupa por proveedor.',
+        'Para completar uno: abrí su ficha y tocá ✏️ en "Datos del Dragonfish". Se arma un renglón de modificación en ➕ Altas con los datos que ya tiene; completás categoría, origen y material y listo.',
+      ],
+    },
+    {
+      icon: '➕', titulo: 'Altas y correcciones para el Dragonfish',
+      desc: 'Pestaña ➕ Altas. Reemplaza el CSV armado a mano: acá los datos obligatorios no se pueden saltear.',
+      pasos: [
+        '➕ Nuevo artículo: código (hasta 15), descripción, proveedor, y la tipificación: Nivel 1 (ambiente), Nivel 2 (qué es), Nivel 3 (variante, opcional), origen y material. Los desplegables salen del catálogo vivo; un valor que no existe no se acepta salvo que marques "Permitir valores nuevos" (y solo si va a tener 5 artículos o más).',
+        'Si el código ya existe en el Dragonfish el renglón sale como modificación (el importador actualiza el artículo); si no, como alta. "Traer sus datos" precarga lo que ya tiene.',
+        '💾 Guardar y cargar otro deja proveedor, categoría, origen y material puestos para el siguiente de la misma tanda.',
+        '📥 Descargar CSV: baja el archivo con el formato exacto del importador (separado por ; y con la codificación que lee el Dragonfish) y marca los renglones como exportados (lote). Importarlo en el Dragonfish de Oficina (ADMIN), no en una réplica.',
+        'Lotes ya exportados: ✅ cuando el sync de la mañana ya muestra esos datos en el catálogo, ⏳ mientras no. ↩ vuelve un renglón a borrador si el CSV no se llegó a importar; 📥 lote #N vuelve a bajar el archivo.',
+        'La imagen se escribe con la ruta unificada C:\FOTOS_PRODUCTOS\CODIGO.JPG; la foto tiene que estar en esa carpeta (OneDrive FOTOS_PRODUCTOS).',
       ],
     },
   ];

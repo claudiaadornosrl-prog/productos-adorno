@@ -12,3 +12,4 @@
 *.xls
 backups/
 _*/
+.claude/
