@@ -16,6 +16,7 @@ function _manualSecciones() {
       pasos: [
         'Los datos de identidad (descripción, proveedor, categoría, origen, material, precios) vienen del Dragonfish, base de Oficina, y se actualizan todas las mañanas. Se cambian en el Dragonfish, no acá.',
         'Lo que agrega el sistema se edita acá: cómo lo factura cada proveedor, si se compra como juego y se vende desglosado, y en qué local no se trabaja.',
+        'Para entrar se usa el mismo usuario que en el Hub. Código del celular (doble factor): si sos admin o directora y lo activaste en el Hub (panel de sesión, "Código del celular al entrar"), después de la clave te pide el código de 6 números de la app de autenticación del celular (Google o Microsoft Authenticator); cambia cada 30 segundos. Si cambiás o perdés el celular, avisale a JP para darlo de baja.',
       ],
     },
     {
