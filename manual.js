@@ -10,6 +10,8 @@ function _mEsc(s) {
 
 function _manualSecciones() {
   return [
+    { icon: '🧭', titulo: 'La barra de arriba', desc: 'Es igual en todos los módulos: mismo lugar para cada cosa y el color de la moneda del módulo (el mismo del Hub).',
+      pasos: ['A la izquierda, la moneda y el nombre del módulo. En la computadora, tocando el nombre (Productos ▾) se abre la lista para pasar a otro módulo sin volver al Hub.', 'Al lado van los apartados (Artículos, Juegos, Sin categoría, Altas): son íconos; al pasar el mouse aparece el nombre, y el apartado en el que estás queda marcado en blanco con su nombre.', 'A la derecha: 📖 Manual; después de la rayita, 🏠 Hub (volver al Hub) y Salir.', 'En el celular: los apartados y los botones de la derecha están adentro del botón ☰; a la vista quedan 🏠 Hub y Salir.'] },
     {
       icon: '🏷', titulo: 'Para qué sirve',
       desc: 'Una sola ficha por artículo con todo lo que el sistema sabe de él.',
