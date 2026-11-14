@@ -606,6 +606,7 @@ tr.dim { color: var(--muted); }
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js" integrity="sha384-UagCvVPT5XXA0Hx+nJYUAGBFseHT9zBgpJMSebsAxl9lciTwbT+39j5VfRjdP5Tp" crossorigin="anonymous"></script>
 <script src="/hub/seguridad.js?v=1"></script>
+<script src="/hub/caras.js?v=4" defer></script><!-- (14-nov-2026) "📷 Registra quién" por función (Hub → Permisos) -->
 <script>
 const SUPABASE_URL  = 'https://jfwtiagteuwmyvblgwms.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_udSPma98Sw9eskeeLCgdCw_S2vIX0Fk';
@@ -645,6 +646,49 @@ const plata2 = n => (n == null || isNaN(n)) ? '—' : '$ ' + Number(n).toLocaleS
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function hoyAR() { const p = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Argentina/Buenos_Aires', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); return p; }
 function toast(msg, tipo) { const t = document.createElement('div'); t.className = 'toast ' + (tipo || ''); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
+
+// (14-nov-2026, JP vía Infraestructura) "📷 Registra quién": si JP marcó la función en el Hub (Permisos → Perfiles),
+// antes de grabar se pide quién lo está haciendo (la cara, o tocar su nombre en la lista; con usuario personal se anota
+// solo) y queda en Hub → Permisos → Registro. Si no está marcada, sigue normal. Devuelve el registro, o null si NO hay
+// que hacer la operación (la persona cerró la ventana o no se pudo anotar). El local que se anota es el de la cuenta.
+let _localProd;   // undefined = sin averiguar todavía
+async function localProd() {
+  if (_localProd !== undefined) return _localProd;
+  let l = null;
+  try {
+    const { data: u } = await sb.rpc('rrhh_current_user');
+    l = u?.local_gerencia || null;
+    if (!l && u?.empleado_id) {
+      const { data: e } = await sb.from('rrhh_empleados').select('local').eq('id', u.empleado_id).maybeSingle();
+      if (['alcorta', 'unicenter', 'oficina'].includes(e?.local)) l = e.local;
+    }
+    if (!l && (u?.rol === 'directora' || u?.rol === 'admin')) l = 'oficina';
+  } catch (_) {}
+  return (_localProd = l);
+}
+let _registrando = false;   // doble toque mientras se pregunta quién → el segundo no hace nada
+async function registrarQuien(funcion, detalle) {
+  if (_registrando) return null;
+  _registrando = true;
+  let r;
+  try {
+    if (window.ADORNO_CARAS?.registrar) {
+      r = await ADORNO_CARAS.registrar({ cli: sb, funcion, local: await localProd(), detalle: detalle || null });
+    } else {
+      // caras.js no llegó a cargar: si la función no registra, se sigue; si registra, hace falta la ventana
+      const { data, error } = await sb.rpc('hub_registra_quien', { p_funcion: funcion });
+      if (error) r = { ok: false, motivo: 'error', error: error.message };
+      else if (!data?.registra) r = { ok: true, omitido: true };
+      else r = { ok: false, motivo: 'error', error: 'recargá la página y probá de nuevo' };
+    }
+  } catch (e) { r = { ok: false, motivo: 'error', error: e.message || String(e) }; }
+  finally { _registrando = false; }
+  if (!r?.ok) {
+    if (r?.motivo === 'error') toast('No pude anotar quién lo hace: ' + (r.error || 'error'), 'error');
+    return null;
+  }
+  return r;
+}
 function toggleTabsMenu(ev) { ev.stopPropagation(); document.getElementById('tabs').classList.toggle('open'); }
 document.addEventListener('click', () => document.getElementById('tabs')?.classList.remove('open'));
 function switchTab(k) {
@@ -947,12 +991,14 @@ function editarRecetaFicha() {
 async function noTrabaja(local) {
   const motivo = prompt(`¿Por qué en ${local} no se trabaja ${PROD.ficha.sku}? (opcional)\n\nDeja de sugerirse en la redistribución de Stock.`, '');
   if (motivo === null) return;
+  if (!await registrarQuien('productos.no_trabaja', { accion: 'no se trabaja', sku: PROD.ficha.sku, local, motivo: motivo || null })) return;
   const { error } = await sb.rpc('stock_marcar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local, p_motivo: motivo || null });
   if (error) return alert(error.message);
   abrirFicha(PROD.ficha.sku);
 }
 async function volverATrabajar(local) {
   if (!confirm(`¿${local} vuelve a trabajar ${PROD.ficha.sku}?`)) return;
+  if (!await registrarQuien('productos.no_trabaja', { accion: 'vuelve a trabajarlo', sku: PROD.ficha.sku, local })) return;
   const { error } = await sb.rpc('stock_quitar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local });
   if (error) return alert(error.message);
   abrirFicha(PROD.ficha.sku);
@@ -998,6 +1044,7 @@ async function guardarEquivFicha() {
   const pack = Number(document.getElementById('eq-pack').value || 1);
   if (!cod && !des) return alert('Poné su código o su descripción.');
   if (!(pack >= 1) || !Number.isInteger(pack)) return alert('"Unid. por pack" tiene que ser un número entero mayor a 0.');
+  if (!await registrarQuien('productos.equiv_editar', { accion: 'agregar equivalencia', sku: PROD.ficha.sku, cuit, codigo: cod || null, descripcion: des || null, pack })) return;
   const { error } = await sb.rpc('compras_guardar_equivalencia', { p_cuit: cuit, p_codigo: cod || null, p_descripcion: des || null,
     p_partes: [{ sku: PROD.ficha.sku, cantidad: pack, proporcion: 1 }] });
   if (error) return alert('No se pudo guardar: ' + error.message);
@@ -1006,6 +1053,7 @@ async function guardarEquivFicha() {
 }
 async function borrarEquivFicha(id) {
   if (!confirm('¿Borrar esta equivalencia?\n\nLas facturas nuevas de ese proveedor con ese código van a entrar sin SKU hasta que se vuelva a cargar.')) return;
+  if (!await registrarQuien('productos.equiv_editar', { accion: 'borrar equivalencia', sku: PROD.ficha.sku, equivalencia: id })) return;
   const { error } = await sb.from('compras_equivalencias').delete().eq('id', id);
   if (error) return alert(error.message);
   abrirFicha(PROD.ficha.sku);
@@ -1062,12 +1110,15 @@ async function cargarExportados() {
 function bajarLote(n) { const filas = (ALTA.exportados || []).filter(a => a.lote === n); if (filas.length) descargarCSV(filas, n); }
 async function reabrirAlta(id) {
   if (!confirm('¿Volver este renglón a borrador?\n\nSolo si el CSV de ese lote NO se importó en el Dragonfish.')) return;
+  const ex = (ALTA.exportados || []).find(a => a.id === id);
+  if (!await registrarQuien('productos.altas_cargar', { accion: 'reabrir alta', alta: id, sku: ex?.sku || null, lote: ex?.lote || null })) return;
   const { error } = await sb.rpc('productos_alta_reabrir', { p_id: id });
   if (error) return alert(error.message);
   toast('↩ Vuelto a borrador', 'success'); cargarAltas(); cargarExportados();
 }
 async function borrarAlta(id, sku) {
   if (!confirm(`¿Borrar el borrador de ${sku}?`)) return;
+  if (!await registrarQuien('productos.altas_cargar', { accion: 'borrar alta', alta: id, sku })) return;
   const { error } = await sb.rpc('productos_alta_borrar', { p_id: id });
   if (error) return alert(error.message);
   toast('🗑 Borrador borrado'); cargarAltas();
@@ -1180,6 +1231,7 @@ async function guardarAlta(otro) {
     notas: g('al-notas'), permitir_nuevo: document.getElementById('al-nuevo').checked };
   const falta = [['sku', 'el código'], ['descripcion', 'la descripción'], ['proveedor_codigo', 'el proveedor'], ['grupo', 'el Nivel 1'], ['categoria', 'el Nivel 2'], ['origen', 'el origen'], ['material', 'el material']].filter(([k]) => !p[k]);
   if (falta.length) return alert('Falta ' + falta.map(x => x[1]).join(', ') + '.');
+  if (!await registrarQuien('productos.altas_cargar', { accion: p.id ? 'editar alta' : 'cargar alta', alta: p.id || null, sku: p.sku, descripcion: p.descripcion })) return;
   const m = document.getElementById('al-msg'); m.textContent = 'Guardando…';
   const { data, error } = await sb.rpc('productos_alta_guardar', { p });
   if (error) { m.textContent = ''; return alert(error.message); }
@@ -1212,6 +1264,7 @@ async function exportarAltas() {
   if (!ALTA.lista.length) return;
   const n = ALTA.lista.length;
   if (!confirm(`Se arma el CSV con ${n} renglón${n === 1 ? '' : 'es'} y quedan marcados como exportados.\n\nDespués hay que importarlo en el Dragonfish de Oficina (ADMIN) con el importador de altas.\n¿Seguimos?`)) return;
+  if (!await registrarQuien('productos.altas_exportar', { renglones: n, skus: ALTA.lista.map(a => a.sku).slice(0, 50) })) return;
   const { data, error } = await sb.rpc('productos_altas_exportar', { p_ids: ALTA.lista.map(a => a.id) });
   if (error) return alert(error.message);
   descargarCSV(data.filas || [], data.lote);
@@ -1219,7 +1272,7 @@ async function exportarAltas() {
   cargarAltas(); cargarExportados();
 }
 </script>
-<script src="juegos.js?v=5"></script>
-<script src="manual.js?v=21"></script>
+<script src="juegos.js?v=6"></script>
+<script src="manual.js?v=22"></script>
 </body>
 </html>
