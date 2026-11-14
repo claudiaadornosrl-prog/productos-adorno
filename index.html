@@ -590,7 +590,7 @@ tr.dim { color: var(--muted); }
       <div class="card">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <h3 style="margin:0;flex:1">➕ Altas y correcciones para el Dragonfish</h3>
-          <button class="ib pri" onclick="abrirAlta()" title="Nuevo artículo: cargar un alta con categoría, origen y material obligatorios" aria-label="Nuevo artículo"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+          <button class="ib pri" id="al-nuevo-btn" onclick="abrirAlta()" title="Nuevo artículo: cargar un alta con categoría, origen y material obligatorios" aria-label="Nuevo artículo"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
           <button class="ib" id="al-csv" onclick="exportarAltas()" title="Descargar el CSV para el importador del Dragonfish con todos los borradores" aria-label="Descargar CSV"><svg class="ico" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
         <p class="mini" style="margin:8px 0 0">Acá se cargan los artículos nuevos (y las correcciones de los que ya existen) con <b>Nivel 1 / Nivel 2, origen y material
@@ -647,10 +647,132 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
 function hoyAR() { const p = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Argentina/Buenos_Aires', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); return p; }
 function toast(msg, tipo) { const t = document.createElement('div'); t.className = 'toast ' + (tipo || ''); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
 
+// ═══ 🔐 PERMISOS POR FUNCIÓN DESDE EL HUB (14-nov-2026, OK de JP en la charla de Stock) ══════════════════════════════════
+// hub_puedo('<id>') con la sesión de esta pantalla: 'h' habilitada · 'a' pide permiso (se ve; al usarla autoriza alguien
+// que la tenga, con SU usuario personal, y se graba con su sesión; para mirar alcanza con autorizar una vez hasta recargar)
+// · 'o' no se muestra. «No lo trabaja» va por local: los de la persona (hub_mis_locales), o cualquiera con «operar en
+// nombre de otro local» de Stock. La base controla lo mismo (altas, ficha sin costo ni proveedores, listas COSTO/COMPRA,
+// stock_puede): esto es para no mostrar lo que rebota. Si el Hub no contesta, la pantalla no esconde nada.
+const FUNC_PROD = {
+  'productos.buscar': 'Buscar artículos, stock por local y precio de venta',
+  'productos.ver_costo': 'Ver precio de costo y margen',
+  'productos.ficha_proveedores': 'Ver cómo lo factura cada proveedor',
+  'productos.equiv_editar': 'Agregar o borrar una equivalencia',
+  'productos.no_trabaja': 'Marcar que un local no trabaja un producto',
+  'productos.sin_categoria': 'Ver artículos sin categoría',
+  'productos.juegos': 'Ver, armar y confirmar juegos',
+  'productos.altas_ver': 'Ver altas pendientes y exportadas',
+  'productos.altas_cargar': 'Cargar, borrar o reabrir un alta',
+  'productos.altas_exportar': 'Exportar altas al Dragonfish',
+  'stock.operar_otros_locales': 'Decidir en nombre de otro local',
+};
+const PERM_LOCAL = { alcorta: 'Alcorta', unicenter: 'Unicenter', oficina: 'Oficina' };
+let PERM = null, MIS_LOCALES = [];
+const PERM_VISTO = new Set();
+async function cargarPermisos() {
+  const ids = Object.keys(FUNC_PROD);
+  try {
+    const [rs, loc] = await Promise.all([Promise.all(ids.map(f => sb.rpc('hub_puedo', { p_funcion: f }))), sb.rpc('hub_mis_locales')]);
+    if (rs.some(r => r.error) || loc.error) throw new Error('el Hub no contestó');
+    const p = {}; ids.forEach((f, i) => { p[f] = rs[i].data || 'o'; });
+    PERM = p; MIS_LOCALES = (loc.data || []).map(l => String(l).toLowerCase());
+  } catch (_) { PERM = null; MIS_LOCALES = []; }
+}
+const permiso = f => PERM ? (PERM[f] || 'o') : 'h';
+const veo = f => permiso(f) !== 'o';
+function permisoEn(f, local) {
+  const p = permiso(f);
+  if (p === 'o' || !local || !PERM) return p;
+  if (MIS_LOCALES.includes(String(local).toLowerCase())) return p;
+  const o = permiso('stock.operar_otros_locales');
+  return o === 'o' ? 'o' : (o === 'a' || p === 'a') ? 'a' : 'h';
+}
+const veoEn = (f, local) => permisoEn(f, local) !== 'o';
+async function clientePara(f, local) {
+  const p = permisoEn(f, local);
+  if (p === 'h') return sb;
+  if (p !== 'a') { toast('Tu perfil no tiene habilitado: ' + (FUNC_PROD[f] || f) + (local ? ' (' + (PERM_LOCAL[local] || local) + ')' : '') + '. Pedíselo a administración (Hub → Permisos).', 'error'); return null; }
+  return pedirSuperior(f, local);
+}
+function soltarCli(db) { if (db && db !== sb) { try { db.auth.signOut({ scope: 'local' }); } catch (_) {} } }
+async function puedeVer(f) {
+  const p = permiso(f);
+  if (p === 'h' || PERM_VISTO.has(f)) return true;
+  if (p !== 'a') return false;
+  const db = await pedirSuperior(f, null);
+  if (!db) return false;
+  PERM_VISTO.add(f); soltarCli(db); return true;
+}
+function permCss() {
+  if (document.getElementById('sup-login-css')) return;
+  const st = document.createElement('style'); st.id = 'sup-login-css';
+  st.textContent = `
+#sup-login { position: fixed; inset: 0; background: rgba(28,22,18,.45); z-index: 99980; display: flex; align-items: center; justify-content: center; padding: 16px; }
+#sup-login .sup-box { background: var(--surface, #fff); color: var(--text, #1c1917); border-radius: 26px; padding: 22px 20px 16px; max-width: 400px; width: 100%; box-shadow: 0 24px 50px -16px rgba(28,22,18,.45); }
+#sup-login .sup-tit { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+#sup-login .sup-txt { font-size: 13px; color: var(--muted, #57534e); line-height: 1.45; margin-bottom: 12px; }
+#sup-login input { width: 100%; box-sizing: border-box; padding: 10px 16px; margin-bottom: 8px; border: 1px solid var(--border, #e2e8f0); border-radius: 999px; font-size: 15px; font-family: inherit; }
+#sup-login .sup-err { min-height: 18px; font-size: 12px; color: #b91c1c; margin-bottom: 6px; }
+#sup-login .sup-pie { display: flex; gap: 10px; justify-content: flex-end; }
+#sup-login .sup-pie button { font: inherit; font-size: 14px; padding: 9px 20px; border-radius: 999px; border: 1px solid var(--border, #d6d3d1); background: transparent; color: inherit; cursor: pointer; }
+#sup-login .sup-pie button.pri { background: var(--boton, #1c1917); color: var(--boton-txt, #fff); border-color: transparent; }
+#sup-login .sup-pie button:disabled { opacity: .5; cursor: default; }`;
+  document.head.appendChild(st);
+}
+// Autoriza quien, con SU sesión, pasa hub_autoriza (admin, o una persona con legajo y la función habilitada: las cuentas
+// de los locales y de la oficina nunca autorizan) y, si va con local, stock_puede para ese local.
+function pedirSuperior(f, local) {
+  return new Promise(listo => {
+    permCss();
+    document.getElementById('sup-login')?.remove();
+    const d = document.createElement('div'); d.id = 'sup-login'; d.setAttribute('data-adorno-superior', '1');
+    const que = (FUNC_PROD[f] || f) + (local ? ' en ' + (PERM_LOCAL[local] || local) : '');
+    d.innerHTML = `<div class="sup-box" role="dialog" aria-modal="true">
+      <div class="sup-tit">Pedir autorización</div>
+      <div class="sup-txt">Para <b>${esc(que)}</b> tiene que autorizar alguien que tenga ese permiso, con <b>su usuario personal</b>
+        (por ejemplo, administración). Las cuentas de los locales y de la oficina no autorizan. No queda abierto en esta computadora.</div>
+      <input id="sup-mail" type="email" placeholder="usuario (mail) de quien autoriza" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input id="sup-clave" type="password" placeholder="su clave" autocomplete="new-password">
+      <div id="sup-err" class="sup-err"></div>
+      <div class="sup-pie"><button type="button" id="sup-no">Cancelar</button><button type="button" class="pri" id="sup-si">Autorizar</button></div></div>`;
+    document.body.appendChild(d);
+    const q = id => d.querySelector('#' + id), err = q('sup-err'), si = q('sup-si');
+    const fin = v => { d.remove(); listo(v); };
+    q('sup-no').onclick = () => fin(null);
+    q('sup-clave').addEventListener('keydown', e => { if (e.key === 'Enter') si.click(); });
+    d.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); fin(null); } });
+    setTimeout(() => q('sup-mail').focus(), 50);
+    si.onclick = async () => {
+      const em = (q('sup-mail').value || '').trim().toLowerCase(), pw = q('sup-clave').value || '';
+      err.textContent = '';
+      if (!em || !pw) { err.textContent = 'Completá el mail y la clave.'; return; }
+      if (session && em === String(session.email || '').toLowerCase()) { err.textContent = 'Tiene que ser el usuario de quien autoriza, no el de esta cuenta.'; return; }
+      si.disabled = true; si.textContent = 'Autorizando…';
+      const cli = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'adorno-' + MODULO + '-superior' } });
+      const salir = async () => { try { await cli.auth.signOut({ scope: 'local' }); } catch (_) {} };
+      try {
+        const r = await cli.auth.signInWithPassword({ email: em, password: pw });
+        if (r.error) throw new Error('Mail o clave incorrectos.');
+        if (window.ADORNO_MFA?.pedirCodigo && !(await ADORNO_MFA.pedirCodigo(cli))) { await salir(); throw new Error('Sin el código del celular no se puede autorizar.'); }
+        const [a, p] = await Promise.all([
+          cli.rpc('hub_autoriza', { p_funcion: f, p_local: null }),
+          local ? cli.rpc('stock_puede', { p_funcion: f, p_local: local }) : Promise.resolve({ data: true })]);
+        if (a.error || a.data !== true || p.error || p.data !== true) {
+          await salir();
+          throw new Error('Ese usuario no puede autorizar ' + que + ': tiene que ser una persona (no la cuenta del local ni de la oficina) con esa función habilitada' + (local ? ' para ese local' : '') + '.');
+        }
+        cli._sup = em; toast('Autorizó ' + em, 'success'); fin(cli);
+      } catch (e) { err.textContent = e.message || 'No se pudo autorizar.'; si.disabled = false; si.textContent = 'Autorizar'; }
+    };
+  });
+}
+
 // (14-nov-2026, JP vía Infraestructura) "📷 Registra quién": si JP marcó la función en el Hub (Permisos → Perfiles),
 // antes de grabar se pide quién lo está haciendo (la cara, o tocar su nombre en la lista; con usuario personal se anota
 // solo) y queda en Hub → Permisos → Registro. Si no está marcada, sigue normal. Devuelve el registro, o null si NO hay
 // que hacer la operación (la persona cerró la ventana o no se pudo anotar). El local que se anota es el de la cuenta.
+// (14-nov-2026) Antes, el permiso del Hub de la función (y del local, si se pasa): sin permiso no sigue; si "pide permiso",
+// autoriza alguien que la tenga. r.db es el cliente con el que se graba (sb, o la sesión de quien autorizó: se cierra sola).
 let _localProd;   // undefined = sin averiguar todavía
 async function localProd() {
   if (_localProd !== undefined) return _localProd;
@@ -667,11 +789,13 @@ async function localProd() {
   return (_localProd = l);
 }
 let _registrando = false;   // doble toque mientras se pregunta quién → el segundo no hace nada
-async function registrarQuien(funcion, detalle) {
+async function registrarQuien(funcion, detalle, localPermiso) {
   if (_registrando) return null;
   _registrando = true;
-  let r;
+  let r, db = null;
   try {
+    db = await clientePara(funcion, localPermiso || null);
+    if (!db) return null;
     if (window.ADORNO_CARAS?.registrar) {
       r = await ADORNO_CARAS.registrar({ cli: sb, funcion, local: await localProd(), detalle: detalle || null });
     } else {
@@ -684,14 +808,24 @@ async function registrarQuien(funcion, detalle) {
   } catch (e) { r = { ok: false, motivo: 'error', error: e.message || String(e) }; }
   finally { _registrando = false; }
   if (!r?.ok) {
+    soltarCli(db);
     if (r?.motivo === 'error') toast('No pude anotar quién lo hace: ' + (r.error || 'error'), 'error');
     return null;
   }
+  r.db = db;
+  if (db !== sb) setTimeout(() => soltarCli(db), 120000);
   return r;
 }
 function toggleTabsMenu(ev) { ev.stopPropagation(); document.getElementById('tabs').classList.toggle('open'); }
 document.addEventListener('click', () => document.getElementById('tabs')?.classList.remove('open'));
+// (14-nov-2026) cada pestaña se ve si el perfil tiene alguna de sus funciones; si están en "pide permiso", al abrirla
+// autoriza alguien una vez y queda abierta hasta recargar
+const TABS_PROD = { buscar: ['productos.buscar'], juegos: ['productos.juegos'], sincat: ['productos.sin_categoria'],
+  altas: ['productos.altas_ver', 'productos.altas_cargar', 'productos.altas_exportar'] };
+const tabVisible = k => (TABS_PROD[k] || []).some(veo);
 function switchTab(k) {
+  const fs = TABS_PROD[k] || [], fa = fs.some(f => permiso(f) === 'h') ? null : fs.find(f => permiso(f) === 'a');
+  if (fa && !PERM_VISTO.has(fa)) { puedeVer(fa).then(ok => { if (ok) switchTab(k); }); return; }
   document.getElementById('tabs').classList.remove('open');
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.id === 'tab-' + k));
   document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === 'content-' + k));
@@ -773,6 +907,21 @@ const _n = v => (v == null || v === '') ? '—' : Number(v).toLocaleString('es-A
 const LOCALES = [['alcorta', 'Alcorta'], ['unicenter', 'Unicenter'], ['oficina', 'Oficina · depósito']];
 
 async function init() {
+  // (14-nov-2026) primero los permisos del Hub: pestañas y botones
+  await cargarPermisos();
+  for (const k of Object.keys(TABS_PROD)) { const b = document.getElementById('tab-' + k); if (b) b.style.display = tabVisible(k) ? '' : 'none'; }
+  const bn = document.getElementById('al-nuevo-btn'); if (bn) bn.style.display = veo('productos.altas_cargar') ? '' : 'none';
+  const bc = document.getElementById('al-csv'); if (bc) bc.style.display = veo('productos.altas_exportar') ? '' : 'none';
+  if (!(permiso('productos.buscar') === 'h' || PERM_VISTO.has('productos.buscar'))) {
+    if (permiso('productos.buscar') === 'a') {
+      document.getElementById('p-lista').innerHTML = `<div class="empty">Para ${esc(FUNC_PROD['productos.buscar'])} hace falta la autorización de alguien que tenga ese permiso.<br><br><button class="btn" style="border-radius:999px" onclick="puedeVer('productos.buscar').then(ok => { if (ok) init(); })">Pedir autorización</button></div>`;
+      return;
+    }
+    const primera = Object.keys(TABS_PROD).find(k => k !== 'buscar' && tabVisible(k));
+    if (primera) switchTab(primera);
+    else document.querySelector('main').innerHTML = '<div class="empty">Tu perfil no tiene funciones de Productos habilitadas. Pedíselas a administración (Hub → Permisos).</div>';
+    return;
+  }
   // ?sku=XXX abre la ficha directo (para linkear desde otros módulos)
   const u = new URLSearchParams(location.search).get('sku');
   cargarListasPrecio();
@@ -800,6 +949,7 @@ function buscarTexto(v, ya) {
 // "Ver más" trae los 300 siguientes sin perder los anteriores.
 async function buscar(mas) {
   const el = document.getElementById('p-lista');
+  if (!(permiso('productos.buscar') === 'h' || PERM_VISTO.has('productos.buscar'))) return;   // (14-nov) Hub
   PROD.pag = mas ? (PROD.pag || 1) + 1 : 1;
   if (!mas) el.innerHTML = '<div class="empty">Buscando…</div>';
   const lim = 300 * PROD.pag;
@@ -900,6 +1050,8 @@ function pintarFicha() {
   const disc = c.discontinuado ?? st[0]?.discontinuado;
   const precioVenta = st.map(s => Number(s.precio || 0)).reduce((a, b) => Math.max(a, b), 0) || null;
   const nt = Object.fromEntries((f.no_trabaja || []).map(x => [x.local, x]));
+  // (14-nov-2026) permisos del Hub (la base además no manda el costo ni los proveedores a quien no los tiene)
+  const verCosto = veo('productos.ver_costo') && !f.sin_costo, verProv = veo('productos.ficha_proveedores') && !f.sin_proveedores, editaEq = veo('productos.equiv_editar');
   const ov = document.getElementById('ov');
   ov.innerHTML = `<div class="box">
     <div class="f-head">
@@ -913,7 +1065,7 @@ function pintarFicha() {
       <button class="btn" onclick="cerrarFicha()">✕</button>
     </div>
 
-    <div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se corrigen con el importador de altas del Dragonfish${f.catalogo ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</span></h4>
+    <div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se corrigen con el importador de altas del Dragonfish${f.catalogo && veo('productos.altas_cargar') ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</span></h4>
       ${f.catalogo ? `<div class="kv">
         <div><b>Grupo › Categoría › Clasificación</b>${[c.grupo, c.categoria, c.clasificacion].filter(Boolean).map(esc).join(' › ') || '<span style="color:var(--amber)">🏷 sin categoría</span>'}</div>
         <div><b>Origen</b>${esc(c.origen || '—')}</div>
@@ -931,9 +1083,10 @@ function pintarFicha() {
       <tbody>${LOCALES.map(([k, nom]) => {
         const s = st.find(x => x.local === k); const min = (f.minimos || {})[k];
         const bajo = s && min != null && Number(s.stock) < Number(min);
+        const decide = veoEn('productos.no_trabaja', k);   // (14-nov) Hub, por local
         const trabaja = k === 'oficina' ? '<span class="mini">—</span>'
-          : nt[k] ? `<span class="chip red" title="${esc(nt[k].motivo || '')}">🚫 no lo trabaja</span> <button class="btn" onclick="volverATrabajar('${k}')">↩</button>`
-          : `<button class="btn" onclick="noTrabaja('${k}')">🚫 No lo trabajamos</button>`;
+          : nt[k] ? `<span class="chip red" title="${esc(nt[k].motivo || '')}">🚫 no lo trabaja</span>${decide ? ` <button class="btn" onclick="volverATrabajar('${k}')">↩</button>` : ''}`
+          : decide ? `<button class="btn" onclick="noTrabaja('${k}')">🚫 No lo trabajamos</button>` : '<span class="mini">sí</span>';
         return `<tr><td>${nom}</td><td class="num" style="${bajo ? 'color:var(--red);font-weight:700' : ''}">${s ? _n(s.stock) : '—'}</td>
           <td class="num">${min != null ? _n(min) : '—'}</td><td>${trabaja}</td></tr>`;
       }).join('')}</tbody></table>
@@ -942,16 +1095,16 @@ function pintarFicha() {
     <div class="f-sec"><h4>💲 Precios</h4>
       <div class="kv">
         <div><b>Venta</b>${plata(precioVenta)}</div>
-        <div><b>Lista COMPRA (proveedor)</b>${plata2(f.precios?.compra)}</div>
+        ${verCosto ? `<div><b>Lista COMPRA (proveedor)</b>${plata2(f.precios?.compra)}</div>
         <div><b>Lista COSTO (con descuento)</b>${plata2(f.precios?.costo)}</div>
-        <div><b>Margen s/ costo</b>${precioVenta && f.precios?.costo ? _n((precioVenta / 1.21 / f.precios.costo - 1) * 100) + ' %' : '—'}</div>
+        <div><b>Margen s/ costo</b>${precioVenta && f.precios?.costo ? _n((precioVenta / 1.21 / f.precios.costo - 1) * 100) + ' %' : '—'}</div>` : ''}
       </div>
-      ${(f.precios?.historia || []).length ? `<details style="margin-top:6px"><summary class="mini" style="cursor:pointer">Historia de listas</summary>
+      ${verCosto && (f.precios?.historia || []).length ? `<details style="margin-top:6px"><summary class="mini" style="cursor:pointer">Historia de listas</summary>
         <table style="margin-top:6px"><tbody>${f.precios.historia.map(h => `<tr><td>${fechaCorta(h.fecha)}</td><td>${esc(h.lista)}</td><td class="num">${plata2(h.precio)}</td></tr>`).join('')}</tbody></table></details>` : ''}
     </div>
 
     <div class="f-sec"><h4>🧩 Juego / desglose
-        <span class="der">${(f.receta || []).length
+        <span class="der">${!veo('productos.juegos') ? '' : (f.receta || []).length
           ? `${f.receta.some(p => !p.confirmado) ? `<button class="act" onclick="confirmarJuego('${esc(f.sku)}')">✔ Confirmar receta</button> ` : ''}<button class="btn" onclick="editarRecetaFicha()">✏️ Editar receta</button>`
           : (f.pieza_de || []).length ? '' : `<button class="btn" onclick="editarJuego('${esc(f.sku)}', '${esc(f.sku)}')">➕ Se vende desglosado</button>`}</span></h4>
       ${(f.receta || []).length ? `<p class="mini">El proveedor lo factura como un juego; al entrar se suman también estas piezas${f.receta.some(p => !p.confirmado) ? ' <b style="color:var(--amber)">(receta sin confirmar: todavía no entra al TXT)</b>' : ''}:</p>
@@ -961,17 +1114,17 @@ function pintarFicha() {
       : '<p class="mini">Se compra y se vende tal cual.</p>'}
     </div>
 
-    <div class="f-sec"><h4>🔗 Cómo lo factura cada proveedor <span class="der"><button class="btn" onclick="nuevaEquivFicha()">➕ Agregar</button></span></h4>
+    ${verProv ? `<div class="f-sec"><h4>🔗 Cómo lo factura cada proveedor <span class="der">${editaEq ? '<button class="btn" onclick="nuevaEquivFicha()">➕ Agregar</button>' : ''}</span></h4>
       ${(f.equivalencias || []).length ? `<table><thead><tr><th>Proveedor</th><th>Su código</th><th>Su descripción</th><th class="num">Pack</th><th class="num">Usada</th><th></th></tr></thead>
         <tbody>${f.equivalencias.map(e => `<tr>
           <td class="mini">${esc(e.proveedor || e.cuit)}</td><td>${esc(e.codigo || '—')}</td><td class="mini">${esc(e.descripcion || '—')}</td>
           <td class="num">${Number(e.pack || 1) > 1 ? '📦 ×' + _n(e.pack) : '1'}</td>
           <td class="num mini">${e.veces ? e.veces + '×' : '—'}${e.ultima ? '<br>' + fechaCorta(e.ultima) : ''}</td>
           <td>${e.partes > 1 ? '<span class="mini" title="Es parte de un set fraccionado: se edita desde Compras → 🔗 Equivalencias">set ×' + e.partes + '</span>'
-                             : `<button class="btn" onclick="borrarEquivFicha(${e.id})" title="Borrar">🗑</button>`}</td></tr>`).join('')}</tbody></table>`
+                             : editaEq ? `<button class="btn" onclick="borrarEquivFicha(${e.id})" title="Borrar">🗑</button>` : ''}</td></tr>`).join('')}</tbody></table>`
         : '<p class="mini">Sin equivalencias: el proveedor lo factura con nuestro mismo código, o nunca se cargó cómo lo llama.</p>'}
       <div id="eq-form"></div>
-    </div>
+    </div>` : ''}
 
     <div class="f-sec"><h4>🚚 Últimas entradas</h4>
       ${(f.ultimas_entradas || []).length ? `<table><thead><tr><th>Fecha</th><th>Remito</th><th>Proveedor</th><th>Destino</th><th class="num">Cant.</th></tr></thead>
@@ -991,15 +1144,17 @@ function editarRecetaFicha() {
 async function noTrabaja(local) {
   const motivo = prompt(`¿Por qué en ${local} no se trabaja ${PROD.ficha.sku}? (opcional)\n\nDeja de sugerirse en la redistribución de Stock.`, '');
   if (motivo === null) return;
-  if (!await registrarQuien('productos.no_trabaja', { accion: 'no se trabaja', sku: PROD.ficha.sku, local, motivo: motivo || null })) return;
-  const { error } = await sb.rpc('stock_marcar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local, p_motivo: motivo || null });
+  const reg = await registrarQuien('productos.no_trabaja', { accion: 'no se trabaja', sku: PROD.ficha.sku, local, motivo: motivo || null }, local);
+  if (!reg) return;
+  const { error } = await reg.db.rpc('stock_marcar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local, p_motivo: motivo || null });
   if (error) return alert(error.message);
   abrirFicha(PROD.ficha.sku);
 }
 async function volverATrabajar(local) {
   if (!confirm(`¿${local} vuelve a trabajar ${PROD.ficha.sku}?`)) return;
-  if (!await registrarQuien('productos.no_trabaja', { accion: 'vuelve a trabajarlo', sku: PROD.ficha.sku, local })) return;
-  const { error } = await sb.rpc('stock_quitar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local });
+  const reg = await registrarQuien('productos.no_trabaja', { accion: 'vuelve a trabajarlo', sku: PROD.ficha.sku, local }, local);
+  if (!reg) return;
+  const { error } = await reg.db.rpc('stock_quitar_no_trabaja', { p_sku: PROD.ficha.sku, p_local: local });
   if (error) return alert(error.message);
   abrirFicha(PROD.ficha.sku);
 }
@@ -1044,8 +1199,9 @@ async function guardarEquivFicha() {
   const pack = Number(document.getElementById('eq-pack').value || 1);
   if (!cod && !des) return alert('Poné su código o su descripción.');
   if (!(pack >= 1) || !Number.isInteger(pack)) return alert('"Unid. por pack" tiene que ser un número entero mayor a 0.');
-  if (!await registrarQuien('productos.equiv_editar', { accion: 'agregar equivalencia', sku: PROD.ficha.sku, cuit, codigo: cod || null, descripcion: des || null, pack })) return;
-  const { error } = await sb.rpc('compras_guardar_equivalencia', { p_cuit: cuit, p_codigo: cod || null, p_descripcion: des || null,
+  const reg = await registrarQuien('productos.equiv_editar', { accion: 'agregar equivalencia', sku: PROD.ficha.sku, cuit, codigo: cod || null, descripcion: des || null, pack });
+  if (!reg) return;
+  const { error } = await reg.db.rpc('compras_guardar_equivalencia', { p_cuit: cuit, p_codigo: cod || null, p_descripcion: des || null,
     p_partes: [{ sku: PROD.ficha.sku, cantidad: pack, proporcion: 1 }] });
   if (error) return alert('No se pudo guardar: ' + error.message);
   toast('✓ Equivalencia guardada', 'success');
@@ -1053,8 +1209,9 @@ async function guardarEquivFicha() {
 }
 async function borrarEquivFicha(id) {
   if (!confirm('¿Borrar esta equivalencia?\n\nLas facturas nuevas de ese proveedor con ese código van a entrar sin SKU hasta que se vuelva a cargar.')) return;
-  if (!await registrarQuien('productos.equiv_editar', { accion: 'borrar equivalencia', sku: PROD.ficha.sku, equivalencia: id })) return;
-  const { error } = await sb.from('compras_equivalencias').delete().eq('id', id);
+  const reg = await registrarQuien('productos.equiv_editar', { accion: 'borrar equivalencia', sku: PROD.ficha.sku, equivalencia: id });
+  if (!reg) return;
+  const { error } = await reg.db.from('compras_equivalencias').delete().eq('id', id);
   if (error) return alert(error.message);
   abrirFicha(PROD.ficha.sku);
 }
@@ -1091,8 +1248,8 @@ function tablaAltas(l, exportados) {
       <td>${a.modo === 'alta' ? '<span class="chip green">alta</span>' : '<span class="chip" style="background:#e0f2fe;color:#0369a1" title="El código ya existe en el Dragonfish: el importador lo modifica">modificación</span>'}</td>
       ${exportados ? `<td class="mini">#${a.lote}<br>${fechaCorta(a.exportado_at)}</td><td>${a.en_dragon ? '<span class="chip green" title="El catálogo sincronizado ya muestra estos datos">✅ cargado</span>' : '<span class="chip gray" title="Todavía no se ve en el catálogo (se importa en ADMIN y el sync lo trae a la mañana)">⏳ sin confirmar</span>'}</td>` : ''}
       <td class="acc">${exportados
-        ? (a.en_dragon ? '' : `<button class="ib" onclick="reabrirAlta(${a.id})" title="Volver a borrador (si el CSV no se llegó a importar)" aria-label="Volver a borrador"><svg class="ico" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`)
-        : `<button class="ib" onclick="abrirAlta(${a.id})" title="Editar" aria-label="Editar"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        ? (a.en_dragon || !veo('productos.altas_cargar') ? '' : `<button class="ib" onclick="reabrirAlta(${a.id})" title="Volver a borrador (si el CSV no se llegó a importar)" aria-label="Volver a borrador"><svg class="ico" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`)
+        : !veo('productos.altas_cargar') ? '' : `<button class="ib" onclick="abrirAlta(${a.id})" title="Editar" aria-label="Editar"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
            <button class="ib rojo" onclick="borrarAlta(${a.id}, '${esc(a.sku)}')" title="Borrar el borrador" aria-label="Borrar"><svg class="ico" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`}</td>
     </tr>`).join('')}</tbody></table></div>`;
 }
@@ -1111,15 +1268,17 @@ function bajarLote(n) { const filas = (ALTA.exportados || []).filter(a => a.lote
 async function reabrirAlta(id) {
   if (!confirm('¿Volver este renglón a borrador?\n\nSolo si el CSV de ese lote NO se importó en el Dragonfish.')) return;
   const ex = (ALTA.exportados || []).find(a => a.id === id);
-  if (!await registrarQuien('productos.altas_cargar', { accion: 'reabrir alta', alta: id, sku: ex?.sku || null, lote: ex?.lote || null })) return;
-  const { error } = await sb.rpc('productos_alta_reabrir', { p_id: id });
+  const reg = await registrarQuien('productos.altas_cargar', { accion: 'reabrir alta', alta: id, sku: ex?.sku || null, lote: ex?.lote || null });
+  if (!reg) return;
+  const { error } = await reg.db.rpc('productos_alta_reabrir', { p_id: id });
   if (error) return alert(error.message);
   toast('↩ Vuelto a borrador', 'success'); cargarAltas(); cargarExportados();
 }
 async function borrarAlta(id, sku) {
   if (!confirm(`¿Borrar el borrador de ${sku}?`)) return;
-  if (!await registrarQuien('productos.altas_cargar', { accion: 'borrar alta', alta: id, sku })) return;
-  const { error } = await sb.rpc('productos_alta_borrar', { p_id: id });
+  const reg = await registrarQuien('productos.altas_cargar', { accion: 'borrar alta', alta: id, sku });
+  if (!reg) return;
+  const { error } = await reg.db.rpc('productos_alta_borrar', { p_id: id });
   if (error) return alert(error.message);
   toast('🗑 Borrador borrado'); cargarAltas();
 }
@@ -1231,9 +1390,10 @@ async function guardarAlta(otro) {
     notas: g('al-notas'), permitir_nuevo: document.getElementById('al-nuevo').checked };
   const falta = [['sku', 'el código'], ['descripcion', 'la descripción'], ['proveedor_codigo', 'el proveedor'], ['grupo', 'el Nivel 1'], ['categoria', 'el Nivel 2'], ['origen', 'el origen'], ['material', 'el material']].filter(([k]) => !p[k]);
   if (falta.length) return alert('Falta ' + falta.map(x => x[1]).join(', ') + '.');
-  if (!await registrarQuien('productos.altas_cargar', { accion: p.id ? 'editar alta' : 'cargar alta', alta: p.id || null, sku: p.sku, descripcion: p.descripcion })) return;
+  const reg = await registrarQuien('productos.altas_cargar', { accion: p.id ? 'editar alta' : 'cargar alta', alta: p.id || null, sku: p.sku, descripcion: p.descripcion });
+  if (!reg) return;
   const m = document.getElementById('al-msg'); m.textContent = 'Guardando…';
-  const { data, error } = await sb.rpc('productos_alta_guardar', { p });
+  const { data, error } = await reg.db.rpc('productos_alta_guardar', { p });
   if (error) { m.textContent = ''; return alert(error.message); }
   toast(`✓ ${data.sku} guardado como ${data.modo}${(data.avisos || []).length ? ' · ' + data.avisos.join(' ') : ''}`, 'success');
   if (PROD.ficha && PROD.ficha.sku === data.sku) { /* la ficha no cambia hasta que se importe */ }
@@ -1264,15 +1424,16 @@ async function exportarAltas() {
   if (!ALTA.lista.length) return;
   const n = ALTA.lista.length;
   if (!confirm(`Se arma el CSV con ${n} renglón${n === 1 ? '' : 'es'} y quedan marcados como exportados.\n\nDespués hay que importarlo en el Dragonfish de Oficina (ADMIN) con el importador de altas.\n¿Seguimos?`)) return;
-  if (!await registrarQuien('productos.altas_exportar', { renglones: n, skus: ALTA.lista.map(a => a.sku).slice(0, 50) })) return;
-  const { data, error } = await sb.rpc('productos_altas_exportar', { p_ids: ALTA.lista.map(a => a.id) });
+  const reg = await registrarQuien('productos.altas_exportar', { renglones: n, skus: ALTA.lista.map(a => a.sku).slice(0, 50) });
+  if (!reg) return;
+  const { data, error } = await reg.db.rpc('productos_altas_exportar', { p_ids: ALTA.lista.map(a => a.id) });
   if (error) return alert(error.message);
   descargarCSV(data.filas || [], data.lote);
   toast(`📥 Lote #${data.lote}: ${(data.filas || []).length} renglones`, 'success');
   cargarAltas(); cargarExportados();
 }
 </script>
-<script src="juegos.js?v=6"></script>
-<script src="manual.js?v=22"></script>
+<script src="juegos.js?v=7"></script>
+<script src="manual.js?v=23"></script>
 </body>
 </html>

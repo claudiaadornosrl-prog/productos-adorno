@@ -127,13 +127,15 @@ function _jgHtmlRecetas() {
       </td></tr>`).join('') || '<tr><td colspan="5" class="vacio">Sin recetas.</td></tr>'}</tbody></table></div>`;
 }
 
-// (14-nov-2026) "📷 Registra quién" del Hub (productos.juegos): registrarQuien está en index.html; si JP no marcó la
+// (14-nov-2026) Permiso del Hub (productos.juegos; si pide permiso, se graba con la sesión de quien autorizó: reg.db)
+// y "📷 Registra quién" del Hub (productos.juegos): registrarQuien está en index.html; si JP no marcó la
 // función, sigue normal; si cierra la ventana de quién lo hace, no se graba.
 const _quienJuego = d => (typeof registrarQuien === 'function' ? registrarQuien('productos.juegos', d) : Promise.resolve({ ok: true, omitido: true }));
 
 async function confirmarJuego(juego) {
-  if (!await _quienJuego({ accion: 'confirmar receta', juego })) return;
-  const { error } = await sb.rpc('stock_juego_confirmar', { p_juego: juego });
+  const reg = await _quienJuego({ accion: 'confirmar receta', juego });
+  if (!reg) return;
+  const { error } = await (reg.db || sb).rpc('stock_juego_confirmar', { p_juego: juego });
   if (error) return alert(error.message);
   const r = JG.recetas.find(x => x.juego === juego); if (r) r.confirmado = true;
   pintarJuegosCard();
@@ -143,9 +145,10 @@ async function confirmarJuego(juego) {
 async function confirmarJuegosTodos() {
   const pend = JG.recetas.filter(r => !r.confirmado);
   if (!confirm(`¿Confirmar las ${pend.length} recetas deducidas del Dragonfish?\n\nDesde ese momento sus piezas se suman solas a los TXT que genere el módulo. Revisalas antes: si alguna está mal, editala con ✏️.`)) return;
-  if (!await _quienJuego({ accion: 'confirmar todas las recetas', recetas: pend.length })) return;
+  const reg = await _quienJuego({ accion: 'confirmar todas las recetas', recetas: pend.length });
+  if (!reg) return;
   for (const r of pend) {
-    const { error } = await sb.rpc('stock_juego_confirmar', { p_juego: r.juego });
+    const { error } = await (reg.db || sb).rpc('stock_juego_confirmar', { p_juego: r.juego });
     if (error) { alert(`${r.juego}: ${error.message}`); break; }
     r.confirmado = true;
   }
@@ -154,8 +157,9 @@ async function confirmarJuegosTodos() {
 
 async function borrarJuego(juego) {
   if (!confirm(`¿Borrar la receta de ${juego}?\n\nEl artículo deja de desglosarse: el TXT lo manda solo y ya no se controla el desglose en los locales.`)) return;
-  if (!await _quienJuego({ accion: 'borrar receta', juego })) return;
-  const { error } = await sb.rpc('stock_juego_guardar', { p_juego: juego, p_piezas: [], p_confirmar: true, p_nota: 'borrada' });
+  const reg = await _quienJuego({ accion: 'borrar receta', juego });
+  if (!reg) return;
+  const { error } = await (reg.db || sb).rpc('stock_juego_guardar', { p_juego: juego, p_piezas: [], p_confirmar: true, p_nota: 'borrada' });
   if (error) return alert(error.message);
   JG.recetas = JG.recetas.filter(r => r.juego !== juego);
   pintarJuegosCard();
@@ -214,8 +218,9 @@ async function guardarJuego() {
   if (piezas.some(p => !(p.cantidad > 0))) return alert('Las cantidades tienen que ser mayores a 0.');
   if (new Set(piezas.map(p => p.sku)).size !== piezas.length) return alert('Hay una pieza repetida.');
   if (JGE.nuevo && JG.recetas.some(r => r.juego === juego) && !confirm(`${juego} ya tiene receta. ¿Reemplazarla?`)) return;
-  if (!await _quienJuego({ accion: JGE.nuevo ? 'armar receta' : 'editar receta', juego, piezas: piezas.length })) return;
-  const { error } = await sb.rpc('stock_juego_guardar', { p_juego: juego, p_piezas: piezas, p_confirmar: true, p_nota: null });
+  const reg = await _quienJuego({ accion: JGE.nuevo ? 'armar receta' : 'editar receta', juego, piezas: piezas.length });
+  if (!reg) return;
+  const { error } = await (reg.db || sb).rpc('stock_juego_guardar', { p_juego: juego, p_piezas: piezas, p_confirmar: true, p_nota: null });
   if (error) return alert(error.message);
   cerrarEditorJuego();
   JG.vista = 'recetas';
