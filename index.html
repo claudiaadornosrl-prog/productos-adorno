@@ -578,7 +578,7 @@ tr.dim { color: var(--muted); }
       <button class="hbtn ab-fijo" onclick="doLogout()" title="Salir" aria-label="Salir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="lb">Salir</span></button>
     </div>
   </header>
-  <script src="/hub/banner.js?v=7"></script><!-- (16-nov) v7: «Ver como» de JP, solo lectura -->
+  <script src="/hub/banner.js?v=8"></script><!-- (16-nov) v7: «Ver como» de JP, solo lectura · v8: carteles de error con ✕ -->
   <main>
 
     <section id="content-buscar" class="tab-content active">
@@ -684,6 +684,18 @@ const plata2 = n => (n == null || isNaN(n)) ? '—' : '$ ' + Number(n).toLocaleS
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function hoyAR() { const p = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Argentina/Buenos_Aires', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); return p; }
 function toast(msg, tipo) { const t = document.createElement('div'); t.className = 'toast ' + (tipo || ''); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
+
+// (16-nov-2026, JP vía Infra: «los carteles rojos de avisos de sistema, que no se cierren automáticamente, que tengan una X
+// … y que se entiendan los errores») /hub/banner.js trae ADORNO_AVISO: error() = cartel rojo fijo con ✕ (el original queda
+// en «Ver detalle técnico»); traducir() = el error en castellano simple. Si banner.js no cargó, sale como antes.
+function errTxt(e) {
+  const m = String((e && e.message) || e || '');
+  try { return window.ADORNO_AVISO ? ADORNO_AVISO.traducir(m).texto : m; } catch (_) { return m; }
+}
+function avisoError(e) {
+  try { if (window.ADORNO_AVISO) { ADORNO_AVISO.error((e && e.message) || e); return; } } catch (_) {}
+  toast(String((e && e.message) || e || 'Algo falló'));
+}
 
 // ═══ 🔐 PERMISOS POR FUNCIÓN DESDE EL HUB (14-nov-2026, OK de JP en la charla de Stock) ══════════════════════════════════
 // hub_puedo('<id>') con la sesión de esta pantalla: 'h' habilitada · 'a' pide permiso (se ve; al usarla autoriza alguien
@@ -896,7 +908,7 @@ async function doLogin() {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
     await entrar(data.user);
-  } catch (e) { errEl.textContent = 'Error: ' + (e.message || 'desconocido'); }
+  } catch (e) { errEl.textContent = errTxt(e); }
   finally { document.getElementById('btn-login').disabled = false; }
 }
 async function entrar(user) {
@@ -1009,7 +1021,7 @@ async function buscar(mas) {
   if (!mas) el.innerHTML = '<div class="empty">Buscando…</div>';
   const lim = 300 * PROD.pag;
   const { data, error } = await sb.rpc('productos_buscar', { p_busca: PROD.busca || null, p_filtro: _filtroCompleto(), p_limite: lim });
-  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
   PROD.lista = data || [];
   pintarLista();
   const st = document.getElementById('p-stat');
@@ -1075,7 +1087,7 @@ async function cargarSinCat() {
   const el = document.getElementById('sc-lista');
   el.innerHTML = '<div class="empty">Cargando…</div>';
   const { data, error } = await sb.rpc('productos_buscar', { p_busca: null, p_filtro: 'sin_categoria', p_limite: 1000 });
-  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
   const l = (data || []).slice().sort((a, b) => (a.proveedor || '').localeCompare(b.proveedor || '') || a.sku.localeCompare(b.sku));
   if (!l.length) { el.innerHTML = '<div class="empty">✅ Todos los artículos activos tienen categoría (o el catálogo todavía no se sincronizó).</div>'; return; }
   const porProv = {};
@@ -1090,7 +1102,7 @@ async function abrirFicha(sku) {
   if (!ov) { ov = document.createElement('div'); ov.id = 'ov'; document.body.appendChild(ov); }
   ov.innerHTML = '<div class="box"><div class="empty">Cargando la ficha…</div></div>';
   const { data, error } = await sb.rpc('productos_ficha', { p_sku: sku });
-  if (error) { ov.innerHTML = `<div class="box"><div class="alerta">${esc(error.message)}</div><button class="btn" onclick="cerrarFicha()">Cerrar</button></div>`; return; }
+  if (error) { ov.innerHTML = `<div class="box"><div class="alerta">${esc(errTxt(error))}</div><button class="btn" onclick="cerrarFicha()">Cerrar</button></div>`; return; }
   PROD.ficha = data;
   pintarFicha();
 }
@@ -1286,7 +1298,7 @@ async function cargarAltas() {
   const el = document.getElementById('al-lista');
   el.innerHTML = '<div class="empty">Cargando…</div>';
   const { data, error } = await sb.rpc('productos_altas_listar', { p_estado: 'borrador' });
-  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
   ALTA.lista = data || [];
   const b = document.getElementById('al-csv'); if (b) b.disabled = !ALTA.lista.length;
   if (!ALTA.lista.length) { el.innerHTML = '<div class="empty">No hay borradores. Tocá ➕ para cargar un artículo nuevo, o ✏️ en la ficha de uno existente para corregirlo.</div>'; return; }
@@ -1312,7 +1324,7 @@ async function cargarExportados() {
   const el = document.getElementById('al-exportados'); if (!el) return;
   el.innerHTML = '<div class="mini">Cargando…</div>';
   const { data, error } = await sb.rpc('productos_altas_listar', { p_estado: 'exportado', p_limite: 500 });
-  if (error) { el.innerHTML = `<div class="alerta">${esc(error.message)}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
   const l = data || [];
   if (!l.length) { el.innerHTML = '<div class="mini">Todavía no se exportó ningún lote.</div>'; return; }
   const lotes = [...new Set(l.map(a => a.lote))];
@@ -1489,6 +1501,6 @@ async function exportarAltas() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=24"></script>
+<script src="manual.js?v=25"></script>
 </body>
 </html>
