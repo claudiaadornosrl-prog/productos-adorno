@@ -1,12 +1,13 @@
 // Service Worker · network-first para HTML, cache-first para assets
-const CACHE_VERSION = 'productos-v52-foto-ficha';
+const CACHE_VERSION = 'productos-v53-cache-propia';
 const CACHE_ASSETS = ['fonts/URWGothic-Book.ttf', './', './index.html', './manual.js', './juegos.js', './adorno-tablas.js', './manifest.webmanifest'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(CACHE_ASSETS)).catch(err => console.warn('[SW]', err)));
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))));
+  // (25-nov, Infra) solo borra las cachés de Productos: todos los módulos comparten el dominio (y las cachés)
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('productos-') && k !== CACHE_VERSION).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 self.addEventListener('fetch', e => {
