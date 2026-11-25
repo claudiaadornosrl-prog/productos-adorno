@@ -647,6 +647,10 @@ tr.dim { color: var(--muted); }
 .pill-baja.re { background: var(--green-bg); color: var(--green); } .pill-baja.re:hover { border-color: var(--green); }
 .pill-ok { background: var(--green-bg); color: var(--green); } .pill-ok:hover { border-color: var(--green); }
 .pill-no { background: transparent; color: var(--muted); border-color: var(--border); } .pill-no:hover { color: var(--text); }
+/* (25-nov) 📷 foto desde la ficha */
+.f-foto { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.pill-foto { font: inherit; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; cursor: pointer; border: 1px solid var(--border); background: var(--primary-bg); color: var(--primary); white-space: nowrap; }
+.pill-foto:hover { border-color: var(--primary); } .pill-foto:disabled { opacity: .55; cursor: default; }
 .pc-filtro { display: inline-flex; gap: 6px; }
 .pc-tabla td { vertical-align: top; } td.clic { cursor: pointer; } td.clic:hover { background: var(--primary-bg); }
 /* (25-nov) 💲 precios: casillas y botones en pastilla */
@@ -1300,7 +1304,7 @@ function pintarFicha() {
   const ov = document.getElementById('ov');
   ov.innerHTML = `<div class="box">
     <div class="f-head">
-      ${f.foto ? `<img src="${esc(f.foto)}">` : '<div class="sinfoto">🖼</div>'}
+      <div class="f-foto">${f.foto ? `<img src="${esc(f.foto)}" alt="Foto de ${esc(f.sku)}">` : '<div class="sinfoto">🖼</div>'}${maestro && veo('productos.editar') ? `<button class="pill-foto" onclick="elegirFoto()" title="Subir una foto nueva: desde la compu, o sacándola con el celular">📷 ${f.foto ? 'Cambiar foto' : 'Subir foto'}</button>` : ''}</div>
       <div style="flex:1;min-width:0">
         <div class="mini">${esc(prov)}</div>
         <h2 style="margin:2px 0 4px;font-size:20px">${esc(f.sku)}</h2>
@@ -1787,15 +1791,66 @@ async function bajaArticulo(baja) {
   abrirFicha(f.sku);
 }
 
+// ═══ 📷 FOTO DESDE LA FICHA (25-nov-2026, paso 5 del maestro) ════════════════════════════════════════════════════════
+// Oficina (productos.editar) sube la foto: se achica acá (≤ 1.000 px, JPEG) y va al bucket público `productos`, carpeta
+// ficha/, con un nombre nuevo cada vez (así nadie ve la vieja por caché); productos_foto_guardar la deja en stock_imagenes
+// (la que leen Stock y Productos) y la anota en 🕘 Cambios. Hasta el 1-ene solo los ZZPRUEBA…: las fotos reales las sigue
+// subiendo cada mañana subir_imagenes_stock.py desde ARIMAGEN del Dragonfish, que pisaría la de acá.
+const FOTO_LADO = 1000, FOTO_CALIDAD = 0.85;
+function elegirFoto() {
+  if (!PROD.ficha) return;
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = () => { const a = inp.files && inp.files[0]; if (a) subirFoto(a); };
+  inp.click();
+}
+async function achicarFoto(archivo) {
+  let img;
+  try { img = await createImageBitmap(archivo, { imageOrientation: 'from-image' }); }
+  catch (_) {
+    img = await new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => mal(new Error('no se pudo leer')); i.src = URL.createObjectURL(archivo); });
+  }
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  if (!w || !h) throw new Error('no se pudo leer');
+  const k = Math.min(1, FOTO_LADO / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', FOTO_CALIDAD));
+  if (!blob) throw new Error('no se pudo convertir');
+  return blob;
+}
+async function subirFoto(archivo) {
+  const f = PROD.ficha; if (!f) return;
+  if (!veo('productos.editar')) return toast('Tu perfil no tiene habilitado: ' + FUNC_PROD['productos.editar'] + '. Pedíselo a administración (Hub → Permisos).', 'error');
+  if (!modoMaestro(f.sku)) return alert('Hasta el corte del 1-ene las fotos se cargan como siempre (carpeta FOTOS_PRODUCTOS + el Dragonfish). Para probar, usá un código que empiece con ZZPRUEBA.');
+  if (!/^image\//.test(archivo.type || '') && !/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(archivo.name || '')) return alert('Eso no es una foto: elegí un archivo JPG o PNG.');
+  if (archivo.size > 30e6) return alert('La foto es demasiado pesada (más de 30 MB).');
+  let blob;
+  try { blob = await achicarFoto(archivo); }
+  catch (_) { return alert('No pude abrir esa foto. Probá con un JPG o PNG (si es de un iPhone en formato HEIC, mandala como JPG).'); }
+  const reg = await registrarQuien('productos.editar', { accion: 'cambiar foto', sku: f.sku });
+  if (!reg) return;
+  const b = document.querySelector('#ov .pill-foto'), txt = b ? b.textContent : '';
+  const volver = () => { if (b) { b.disabled = false; b.textContent = txt; } };
+  if (b) { b.disabled = true; b.textContent = '📷 Subiendo…'; }
+  const objeto = `ficha/${f.sku.replace(/[^A-Za-z0-9._-]/g, '_')}-${Date.now()}.jpg`;
+  const up = await reg.db.storage.from('productos').upload(objeto, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+  if (up.error) { volver(); return avisoError(up.error); }
+  const { error } = await reg.db.rpc('productos_foto_guardar', { p_sku: f.sku, p_objeto: objeto, p_registro: reg.id || null });
+  if (error) { volver(); return avisoError(error); }
+  toast(`📷 Foto de ${f.sku} guardada (${Math.round(blob.size / 1024)} KB)`, 'success');
+  abrirFicha(f.sku);
+}
+
 // Lo que se carga aparte en la ficha: los pedidos de corrección de ese artículo y el historial de cambios
 const CAMPO_TXT = { alta: 'Alta', descripcion: 'Descripción', descripcion_adicional: 'Descripción adicional', proveedor: 'Proveedor', grupo: 'Nivel 1',
   categoria: 'Nivel 2', clasificacion: 'Nivel 3', origen: 'Origen', material: 'Material', unidad_medida: 'Unidad', temporada: 'Temporada',
-  descuento_pct: 'Descuento %', linea: 'Línea', precio_venta: 'Precio de venta', costo: 'Costo', compra: 'Compra', discontinuado: 'Baja' };
+  descuento_pct: 'Descuento %', linea: 'Línea', precio_venta: 'Precio de venta', costo: 'Costo', compra: 'Compra', discontinuado: 'Baja', foto: 'Foto' };
 const fechaHora = d => d ? new Date(d).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) : '';
 function valorCambio(campo, v) {
   if (v == null || v === '') return '—';
   if (campo === 'discontinuado') { const [b, ...m] = String(v).split(' · '); return (b === 'true' ? 'dado de baja' : 'activo') + (m.length ? ' · ' + esc(m.join(' · ')) : ''); }
   if (['precio_venta', 'costo', 'compra'].includes(campo)) return plata2(Number(v));
+  if (campo === 'foto') return /^https:\/\//.test(String(v)) ? `<a href="${esc(v)}" target="_blank" rel="noopener" title="Ver la foto"><img src="${esc(v)}" alt="" loading="lazy" style="width:44px;height:44px;object-fit:cover;border-radius:8px;vertical-align:middle"></a>` : esc(v);
   return esc(v);
 }
 async function extrasFicha(sku) {
@@ -2178,7 +2233,7 @@ async function guardarPreciosFicha() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=31"></script>
+<script src="manual.js?v=32"></script>
 <script src="adorno-tablas.js?v=abc48a63"></script>
 </body>
 </html>
