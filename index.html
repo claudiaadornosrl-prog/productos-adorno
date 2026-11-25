@@ -1541,7 +1541,10 @@ async function abrirAlta(id, prefill, opc) {
   const v = await cargarVocab(); if (!v) return;
   const a = id ? ALTA.lista.find(x => x.id === id) : null;
   ALTA.edit = a ? a.id : null;
-  ALTA.maestro = !!(opc && opc.maestro);
+  // (paso 4) desde el corte (llave en 'productos') el ➕ también graba directo: ya no hay CSV para el Dragonfish
+  ALTA.maestro = !!(opc && opc.maestro) || (!a && !prefill && PROD.maestro === 'productos');
+  ALTA.fijo = !!(prefill && prefill.sku);   // editar uno que ya existe (desde la ficha): los precios van por 💲 de la ficha
+  ALTA.ultimo = null;
   const mae = ALTA.maestro;
   const d = Object.assign({ unidad_medida: 'UN', temporada: 'BOLSA', descuento_pct: '', linea: '1' }, a || prefill || {});
   let ov = document.getElementById('ov-alta');
@@ -1572,6 +1575,11 @@ async function abrirAlta(id, prefill, opc) {
       <label><span class="req">Material</span><input id="al-mat" list="dl-mat" maxlength="10" value="${esc(d.material || '')}"><datalist id="dl-mat">${v.materiales.map(o => `<option value="${esc(o.v)}">${o.n} artículos</option>`).join('')}</datalist><span class="ayuda">el principal · sin tildes (ALGODON)</span></label>
       <label class="ancha" style="flex-direction:row;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="al-nuevo" style="width:auto"> Permitir valores nuevos (un grupo, categoría, origen o material que todavía no existe en el catálogo · solo si va a tener 5 artículos o más)</label>
       <label class="ancha"${mae ? ' style="display:none"' : ''}>Notas internas<input id="al-notas" class="libre" maxlength="200" value="${esc(d.notas || '')}" placeholder="no salen en el CSV"></label>
+
+      <div class="al-sec al-precio" style="display:none">💲 Precios</div>
+      <label class="al-precio" style="display:none">Venta · los tres locales<input id="al-venta" inputmode="decimal" placeholder="$ 0"><span class="ayuda">al peso · si lo dejás vacío, se lo ponés después desde la ficha</span></label>
+      ${prVeCosto() ? `<label class="al-precio" style="display:none">Costo<input id="al-costo" inputmode="decimal"><span class="ayuda">con centavos si hace falta</span></label>
+      <label class="al-precio" style="display:none">Compra<input id="al-compra" inputmode="decimal"><span class="ayuda">lo que cobra el proveedor</span></label>` : ''}
       ${mae ? `<div class="ancha mini" style="color:var(--muted)">Se graba en el artículo al tocar Guardar: lo ven enseguida Stock, el POS y Compras en los tres locales.${PROD.maestro !== 'productos' ? ' 🧪 Hasta el 1-ene solo se pueden grabar códigos de prueba (ZZPRUEBA…).' : ''}</div>` : ''}
     </div>
     <div class="al-acc">
@@ -1584,8 +1592,31 @@ async function abrirAlta(id, prefill, opc) {
   grupoCambio(d.categoria, d.clasificacion);
   if (!a && !prefill && !d.sku) setTimeout(() => document.getElementById('al-sku')?.focus(), 50);
   if (d.sku && !a) chequearSku(d.sku);
+  mostrarPreciosAlta();
 }
-function cerrarAlta() { document.getElementById('ov-alta')?.remove(); ALTA.edit = null; ALTA.maestro = false; }
+function cerrarAlta() { document.getElementById('ov-alta')?.remove(); ALTA.edit = null; ALTA.maestro = false; ALTA.fijo = false; }
+// (paso 4) Los precios en el alta: solo para un código NUEVO que se graba directo (hasta el corte, los ZZPRUEBA…). Al editar uno
+// que ya existe no aparecen: el precio se cambia con 💲 ✏️ de la ficha o en la pestaña Precios.
+function mostrarPreciosAlta() {
+  const sku = (document.getElementById('al-sku')?.value || '').trim();
+  const ver = veo('productos.precio') && !ALTA.edit && !ALTA.fijo && !ALTA.ultimo && (ALTA.maestro || (!!sku && modoMaestro(sku)));
+  document.querySelectorAll('#ov-alta .al-precio').forEach(e => { e.style.display = ver ? '' : 'none'; });
+}
+function leerPreciosAlta() {   // {} si no van precios · false si hay que frenar · {venta, costo, compra} con lo que se escribió
+  const sec = document.querySelector('#ov-alta .al-sec.al-precio');
+  if (!sec || sec.style.display === 'none') return {};
+  const out = {};
+  for (const c of ['venta', 'costo', 'compra']) {
+    const e = document.getElementById('al-' + c); if (!e) continue;
+    const s = e.value.trim(); if (!s) continue;
+    const v = numAR(s);
+    if (!prValido(v)) { alert(`${PR_TXT[c]}: no entiendo «${s}». Escribilo así: 12.500 o 12500 (con coma para los centavos).`); e.focus(); return false; }
+    out[c] = prRed(v, c);
+  }
+  if (out.venta == null && !confirm('No pusiste el precio de venta.\n\n¿Lo creás igual? Se lo podés poner después desde la ficha (💲 ✏️).')) return false;
+  if (out.venta === 0 && !confirm('El precio de venta quedó en $ 0. ¿Está bien?')) return false;
+  return out;
+}
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('ov-alta')) { e.stopImmediatePropagation(); cerrarAlta(); } }, true);
 function provCambio() {
   const s = document.getElementById('al-prov'), o = s.options[s.selectedIndex];
@@ -1615,7 +1646,7 @@ let _skuT = null;
 function chequearSku(v) {
   clearTimeout(_skuT);
   const h = document.getElementById('al-sku-ayuda'); const s = (v || '').trim().toUpperCase();
-  if (!s) { h.textContent = 'hasta 15 caracteres'; h.className = 'ayuda'; return; }
+  if (!s) { h.textContent = 'hasta 15 caracteres'; h.className = 'ayuda'; ALTA.ultimo = null; mostrarPreciosAlta(); return; }
   _skuT = setTimeout(async () => {
     const { data } = await sb.from('productos_catalogo').select('sku,descripcion,grupo,categoria,clasificacion,origen,material,proveedor_codigo,descripcion_adicional,unidad_medida,temporada,descuento_pct,imagen_ruta').eq('sku', s).maybeSingle();
     const mae = ALTA.maestro || modoMaestro(s);
@@ -1624,6 +1655,7 @@ function chequearSku(v) {
         : `ya existe en el Dragonfish (${esc(data.descripcion || '')}) → sale como <b>modificación</b>${ALTA.edit ? '' : ' · <a href="#" onclick="precargarDeCatalogo(); return false">traer sus datos</a>'}`;
       h.className = 'ayuda mal'; ALTA.ultimo = data;
     } else { h.textContent = mae ? 'código libre → artículo nuevo (se graba directo)' : 'código libre → alta nueva'; h.className = 'ayuda ok'; ALTA.ultimo = null; }
+    mostrarPreciosAlta();
   }, 450);
 }
 function precargarDeCatalogo() {
@@ -1720,17 +1752,20 @@ function editarDesdeFicha() {
 async function guardarArticulo(p, otro) {
   if (!veo('productos.editar')) return toast('Tu perfil no tiene habilitado: ' + FUNC_PROD['productos.editar'] + '. Pedíselo a administración (Hub → Permisos).', 'error');
   if (!modoMaestro(p.sku)) return alert('Hasta el corte del 1-ene los artículos se cargan en el Dragonfish. Para probar, usá un código que empiece con ZZPRUEBA.');
-  const reg = await registrarQuien('productos.editar', { accion: 'guardar artículo', sku: p.sku, descripcion: p.descripcion });
+  const pr = leerPreciosAlta(); if (pr === false) return;   // (paso 4) venta / costo / compra del alta, en la misma operación
+  const reg = await registrarQuien('productos.editar', Object.assign({ accion: 'guardar artículo', sku: p.sku, descripcion: p.descripcion }, pr));
   if (!reg) return;
   const m = document.getElementById('al-msg'); if (m) m.textContent = 'Guardando…';
-  const datos = Object.assign({}, p, { registro: reg.id || null });
+  const datos = Object.assign({}, p, pr, { registro: reg.id || null });
   delete datos.id; delete datos.imagen; delete datos.notas;
   const { data, error } = await reg.db.rpc('productos_articulo_guardar', { p: datos });
   if (error) { if (m) m.textContent = ''; return avisoError(error); }
-  toast(data.modo === 'alta' ? `✓ ${data.sku} creado en los tres locales (stock 0)` : data.cambios ? `✓ ${data.sku} guardado · ${data.cambios} dato${data.cambios === 1 ? '' : 's'} cambiado${data.cambios === 1 ? '' : 's'}` : `${data.sku}: no había nada para cambiar`, 'success');
+  const conPrecio = pr.venta != null ? ` · venta ${plata(pr.venta)}` : data.modo === 'alta' ? ' · sin precio de venta' : '';
+  toast(data.modo === 'alta' ? `✓ ${data.sku} creado en los tres locales (stock 0)${conPrecio}` : data.cambios || data.precios?.aplicados ? `✓ ${data.sku} guardado${data.cambios ? ` · ${data.cambios} dato${data.cambios === 1 ? '' : 's'} cambiado${data.cambios === 1 ? '' : 's'}` : ''}${data.precios?.aplicados ? conPrecio : ''}` : `${data.sku}: no había nada para cambiar`, 'success');
   if (otro) {
-    ['al-sku', 'al-desc', 'al-adic', 'al-cla'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+    ['al-sku', 'al-desc', 'al-adic', 'al-cla', 'al-venta', 'al-costo', 'al-compra'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     const h = document.getElementById('al-sku-ayuda'); if (h) { h.textContent = 'hasta 15 caracteres'; h.className = 'ayuda'; }
+    ALTA.ultimo = null; mostrarPreciosAlta();
     if (m) m.textContent = `✓ ${data.sku} guardado. Siguiente…`; document.getElementById('al-sku')?.focus();
     return;
   }
@@ -2143,7 +2178,7 @@ async function guardarPreciosFicha() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=30"></script>
+<script src="manual.js?v=31"></script>
 <script src="adorno-tablas.js?v=abc48a63"></script>
 </body>
 </html>

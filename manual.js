@@ -90,7 +90,7 @@ function _manualSecciones() {
         '📥 Descargar CSV: baja el archivo con el formato exacto del importador (separado por ; y con la codificación que lee el Dragonfish) y marca los renglones como exportados (lote). Importarlo en el Dragonfish de Oficina (ADMIN), no en una réplica.',
         'Lotes ya exportados: ✅ cuando el sync de la mañana ya muestra esos datos en el catálogo, ⏳ mientras no. ↩ vuelve un renglón a borrador si el CSV no se llegó a importar; 📥 lote #N vuelve a bajar el archivo.',
         'La imagen se escribe con la ruta unificada C:\FOTOS_PRODUCTOS\CODIGO.JPG; la foto tiene que estar en esa carpeta (OneDrive FOTOS_PRODUCTOS).',
-        '🧪 Un código que empieza con ZZPRUEBA no va al CSV: se graba directo en el artículo, como va a ser desde el 1-ene (ver «🏛 Editar el artículo»).',
+        '🧪 Un código que empieza con ZZPRUEBA no va al CSV: se graba directo en el artículo, con sus precios, como va a ser desde el 1-ene (ver «🏛 Editar el artículo»).',
       ],
     },
     {
@@ -109,6 +109,7 @@ function _manualSecciones() {
       desc: 'Cuando se apaga el Dragonfish, Productos pasa a ser el dueño de los artículos y los precios: se cargan y se corrigen acá, y lo ven enseguida Stock, el POS y Compras en los tres locales. Lo hace solo Oficina.',
       pasos: [
         'En la ficha, «📋 Datos del artículo» → ✏️: el mismo formulario de altas (descripción, proveedor, Nivel 1/2/3, origen, material…); 💾 Guardar lo graba directo. El precio de venta es uno solo para los tres locales.',
+        '➕ Artículo nuevo (pestaña ➕ Altas): el mismo formulario, con «💲 Precios» al final: la venta (una sola para los tres locales), y el costo y la compra si los ves. 💾 Guardar crea el artículo en los tres locales con stock 0 y con esos precios, todo junto: si un precio está mal escrito no se graba nada. Si dejás la venta vacía, pregunta si lo creás igual y se la ponés después desde la ficha. Los precios aparecen solo para un código nuevo: el de uno que ya existe se cambia con 💲 ✏️ de la ficha o en la pestaña 💲 Precios. Para poner precios hace falta además el permiso de cambiar precios.',
         '⛔ Dar de baja: el artículo queda discontinuado en los tres locales (no se borra nada); ↩ Reactivar lo vuelve a activar.',
         '💲 Precios → ✏️: la venta (una sola para los tres locales), y el costo y la compra si los ves. Si la venta cambia más de 50 %, pregunta antes de grabar.',
         '🕘 Cambios (abajo de todo en la ficha): cada cambio con el antes, el después, quién y cuándo. El costo y la compra solo los ve quien tiene permiso de ver el costo.',
