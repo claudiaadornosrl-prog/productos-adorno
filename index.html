@@ -641,6 +641,14 @@ tr.dim { color: var(--muted); }
 .chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .chip.green { background: var(--green-bg); color: var(--green); } .chip.amber { background: var(--amber-bg); color: var(--amber); }
 .chip.red { background: var(--red-bg); color: var(--red); } .chip.gray { background: var(--gray-light); color: var(--muted); }
+/* (25-nov) maestro y pedidos de corrección: pastillas (regla de JP: nada rectangular) */
+.pill-baja, .pill-ok, .pill-no { font: inherit; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }
+.pill-baja { background: var(--red-bg); color: var(--red); } .pill-baja:hover { border-color: var(--red); }
+.pill-baja.re { background: var(--green-bg); color: var(--green); } .pill-baja.re:hover { border-color: var(--green); }
+.pill-ok { background: var(--green-bg); color: var(--green); } .pill-ok:hover { border-color: var(--green); }
+.pill-no { background: transparent; color: var(--muted); border-color: var(--border); } .pill-no:hover { color: var(--text); }
+.pc-filtro { display: inline-flex; gap: 6px; }
+.pc-tabla td { vertical-align: top; } td.clic { cursor: pointer; } td.clic:hover { background: var(--primary-bg); }
 .empty { padding: 50px 20px; text-align: center; color: var(--muted); background: white; border-radius: 10px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 1000; }
 .toast.error { background: var(--red); } .toast.success { background: var(--green); }
@@ -679,6 +687,7 @@ tr.dim { color: var(--muted); }
       <button id="tab-juegos" onclick="switchTab('juegos')" title="Juegos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lb">Juegos</span></button>
       <button id="tab-sincat" onclick="switchTab('sincat')" title="Sin categoría"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="lb">Sin categoría</span></button>
       <button id="tab-altas" onclick="switchTab('altas')" title="Altas para el Dragonfish"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="lb">Altas</span></button>
+      <button id="tab-pedidos" onclick="switchTab('pedidos')" title="Pedidos de corrección de los locales"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg><span class="lb">Pedidos</span><span class="tab-badge" id="pc-badge" style="display:none"></span></button>
     </nav>
     <div class="header-right ab-der">
       <button class="hbtn kebab-tabs-btn" onclick="toggleTabsMenu(event)" title="Menú" aria-label="Menú"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
@@ -747,6 +756,23 @@ tr.dim { color: var(--muted); }
       </div>
       <div id="al-lista"></div>
       <details style="margin-top:14px"><summary class="mini" style="cursor:pointer" onclick="cargarExportados()">📦 Lotes ya exportados</summary><div id="al-exportados" style="margin-top:8px"></div></details>
+    </section>
+    <!-- (25-nov-2026, JP: «desde los locales … un botón … para que pueda dejar una "solicitud de modificación"») los locales
+         piden desde Stock (📝 en la tarjeta del artículo); acá Oficina los ve y los resuelve -->
+    <section id="content-pedidos" class="tab-content">
+      <div class="card">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <h3 style="margin:0;flex:1">📝 Pedidos de corrección de los locales</h3>
+          <span class="pc-filtro" id="pc-filtro">
+            <button class="fchip on" data-e="pendiente" onclick="filtroPedidos('pendiente')">⏳ Pendientes</button>
+            <button class="fchip" data-e="resueltos" onclick="filtroPedidos('resueltos')">✅ Resueltos</button>
+          </span>
+        </div>
+        <p class="mini" style="margin:8px 0 0">Los dejan los locales desde Stock (📝 en la tarjeta del artículo) cuando algo de un artículo está mal: la descripción,
+          el precio, el proveedor, la foto… Corregilo donde corresponda (hasta el 1-ene, en el Dragonfish o con ➕ Altas) y marcalo
+          <b>✅ Hecho</b>, o <b>Descartar</b> si no hay que cambiar nada. A quien lo pidió le llega el aviso con tu respuesta.</p>
+      </div>
+      <div id="pc-lista"></div>
     </section>
 
   </main>
@@ -823,6 +849,8 @@ const FUNC_PROD = {
   'productos.altas_ver': 'Ver altas pendientes y exportadas',
   'productos.altas_cargar': 'Cargar, borrar o reabrir un alta',
   'productos.altas_exportar': 'Exportar altas al Dragonfish',
+  'productos.editar': 'Editar la ficha de un artículo, darlo de baja o reactivarlo',
+  'productos.precio': 'Cambiar precios de venta, costo y compra (uno o en bloque)',
   'stock.operar_otros_locales': 'Decidir en nombre de otro local',
 };
 const PERM_LOCAL = { alcorta: 'Alcorta', unicenter: 'Unicenter', oficina: 'Oficina' };
@@ -997,7 +1025,7 @@ document.addEventListener('click', () => document.getElementById('tabs')?.classL
 // (14-nov-2026) cada pestaña se ve si el perfil tiene alguna de sus funciones; si están en "pide permiso", al abrirla
 // autoriza alguien una vez y queda abierta hasta recargar
 const TABS_PROD = { buscar: ['productos.buscar'], juegos: ['productos.juegos'], sincat: ['productos.sin_categoria'],
-  altas: ['productos.altas_ver', 'productos.altas_cargar', 'productos.altas_exportar'] };
+  altas: ['productos.altas_ver', 'productos.altas_cargar', 'productos.altas_exportar'], pedidos: ['productos.editar'] };
 const tabVisible = k => (TABS_PROD[k] || []).some(veo);
 function switchTab(k) {
   const fs = TABS_PROD[k] || [], fa = fs.some(f => permiso(f) === 'h') ? null : fs.find(f => permiso(f) === 'a');
@@ -1098,9 +1126,12 @@ async function init() {
     else document.querySelector('main').innerHTML = '<div class="empty">Tu perfil no tiene funciones de Productos habilitadas. Pedíselas a administración (Hub → Permisos).</div>';
     return;
   }
-  // ?sku=XXX abre la ficha directo (para linkear desde otros módulos)
-  const u = new URLSearchParams(location.search).get('sku');
+  // ?sku=XXX abre la ficha directo (para linkear desde otros módulos) · ?pedidos=1 (aviso de un pedido de corrección) la bandeja
+  const qs = new URLSearchParams(location.search), u = qs.get('sku');
+  cargarMaestro();
   cargarListasPrecio();
+  if (veo('productos.editar')) contarPedidos();
+  if (qs.get('pedidos') && tabVisible('pedidos')) { switchTab('pedidos'); return; }
   await buscar();
   if (u) abrirFicha(u);
 }
@@ -1109,6 +1140,7 @@ function onTab(k) {
   if (k === 'juegos') cargarJuegosCard();
   if (k === 'sincat') cargarSinCat();
   if (k === 'altas') cargarAltas();
+  if (k === 'pedidos') cargarPedidos();
 }
 
 // ── Buscador ──────────────────────────────────────────────────────
@@ -1228,6 +1260,7 @@ function pintarFicha() {
   const nt = Object.fromEntries((f.no_trabaja || []).map(x => [x.local, x]));
   // (14-nov-2026) permisos del Hub (la base además no manda el costo ni los proveedores a quien no los tiene)
   const verCosto = veo('productos.ver_costo') && !f.sin_costo, verProv = veo('productos.ficha_proveedores') && !f.sin_proveedores, editaEq = veo('productos.equiv_editar');
+  const maestro = modoMaestro(f.sku);   // (25-nov) Productos dueño del maestro: desde el 1-ene todos; hasta entonces solo ZZPRUEBA…
   const ov = document.getElementById('ov');
   ov.innerHTML = `<div class="box">
     <div class="f-head">
@@ -1236,12 +1269,13 @@ function pintarFicha() {
         <div class="mini">${esc(prov)}</div>
         <h2 style="margin:2px 0 4px;font-size:20px">${esc(f.sku)}</h2>
         <div style="font-size:15px">${esc(desc)}${c.descripcion_adicional ? `<div class="mini">${esc(c.descripcion_adicional)}</div>` : ''}</div>
-        <div style="margin-top:6px">${disc ? '<span class="chip gray">⛔ discontinuado</span> ' : ''}${(f.receta || []).length ? '<span class="chip" style="background:#ede9fe;color:#6d28d9">🧩 juego</span> ' : ''}${(f.pieza_de || []).length ? '<span class="chip" style="background:#e0f2fe;color:#0369a1">🔹 pieza de un juego</span>' : ''}</div>
+        <div style="margin-top:6px">${disc ? '<span class="chip gray">⛔ discontinuado</span> ' : ''}${(f.receta || []).length ? '<span class="chip" style="background:#ede9fe;color:#6d28d9">🧩 juego</span> ' : ''}${(f.pieza_de || []).length ? '<span class="chip" style="background:#e0f2fe;color:#0369a1">🔹 pieza de un juego</span>' : ''}${maestro && veo('productos.editar') ? ` <button class="pill-baja${disc ? ' re' : ''}" onclick="bajaArticulo(${disc ? 'false' : 'true'})" title="${disc ? 'Vuelve a estar activo en los tres locales' : 'Queda discontinuado en los tres locales (no se borra nada)'}">${disc ? '↩ Reactivar' : '⛔ Dar de baja'}</button>` : ''}</div>
       </div>
       <button class="btn" onclick="cerrarFicha()">✕</button>
     </div>
 
-    <div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se corrigen con el importador de altas del Dragonfish${f.catalogo && veo('productos.altas_cargar') ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</span></h4>
+    ${maestro ? `<div class="f-sec"><h4>📋 Datos del artículo <span class="der mini">${veo('productos.editar') ? `se corrigen acá <button class="ib" onclick="editarDesdeFicha()" title="Editar la ficha: descripción, proveedor, categoría, origen, material…" aria-label="Editar la ficha"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : 'los corrige Oficina'}${PROD.maestro !== 'productos' ? ' <span class="chip amber" title="Código de prueba: se graba de verdad, pero solo los ZZPRUEBA… hasta el 1-ene">🧪 prueba</span>' : ''}</span></h4>`
+      : `<div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se corrigen con el importador de altas del Dragonfish${f.catalogo && veo('productos.altas_cargar') ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</span></h4>`}
       ${f.catalogo ? `<div class="kv">
         <div><b>Grupo › Categoría › Clasificación</b>${[c.grupo, c.categoria, c.clasificacion].filter(Boolean).map(esc).join(' › ') || '<span style="color:var(--amber)">🏷 sin categoría</span>'}</div>
         <div><b>Origen</b>${esc(c.origen || '—')}</div>
@@ -1251,8 +1285,9 @@ function pintarFicha() {
         <div><b>Descuento del proveedor</b>${c.descuento_pct != null ? _n(c.descuento_pct) + ' %' : '—'}</div>
         <div><b>Alta</b>${fechaCorta(c.fecha_alta) || '—'}</div>
         <div><b>Última modificación</b>${fechaCorta(c.fecha_modif) || '—'}</div>
-      </div>` : '<div class="mini">Todavía no está en el catálogo sincronizado (corre con sync_mercaderia.py).</div>'}
+      </div>` : maestro ? '<div class="mini">Todavía no tiene ficha: tocá ✏️ para completarla.</div>' : '<div class="mini">Todavía no está en el catálogo sincronizado (corre con sync_mercaderia.py).</div>'}
     </div>
+    <div id="f-pedidos"></div>
 
     <div class="f-sec"><h4>📦 Stock y reposición</h4>
       <table><thead><tr><th>Local</th><th class="num">Stock</th><th class="num">Mínimo</th><th>¿Lo trabaja?</th></tr></thead>
@@ -1309,7 +1344,9 @@ function pintarFicha() {
         : '<p class="mini">Sin remitos registrados.</p>'}
       ${(f.pedidos_pendientes || []).length ? `<p class="mini" style="margin-top:8px">📝 Pedido y todavía no entregado: ${f.pedidos_pendientes.map(p => `pedido ${p.pedido}${p.prueba ? ' (🧪)' : ''} · ${esc(p.proveedor || '')} · <b>${_n(p.pendiente)}</b>`).join(' · ')}</p>` : ''}
     </div>
+    <div id="f-historial"></div>
   </div>`;
+  extrasFicha(f.sku);
 }
 
 function editarRecetaFicha() {
@@ -1460,10 +1497,15 @@ async function borrarAlta(id, sku) {
 }
 
 // Formulario (overlay propio: se cierra solo con ✕, Cancelar o Escape)
-async function abrirAlta(id, prefill) {
+// (25-nov) opc.maestro: el mismo formulario guarda DIRECTO en el artículo (productos_articulo_guardar) en vez de dejar un
+// borrador para el CSV. Pasa al editar desde la ficha en modo maestro, y al cargar un código que va directo (ZZPRUEBA… hasta
+// el 1-ene; todos desde que la llave stock_config.maestro diga 'productos').
+async function abrirAlta(id, prefill, opc) {
   const v = await cargarVocab(); if (!v) return;
   const a = id ? ALTA.lista.find(x => x.id === id) : null;
   ALTA.edit = a ? a.id : null;
+  ALTA.maestro = !!(opc && opc.maestro);
+  const mae = ALTA.maestro;
   const d = Object.assign({ unidad_medida: 'UN', temporada: 'BOLSA', descuento_pct: '', linea: '1' }, a || prefill || {});
   let ov = document.getElementById('ov-alta');
   if (!ov) { ov = document.createElement('div'); ov.id = 'ov-alta'; document.body.appendChild(ov); }
@@ -1471,7 +1513,7 @@ async function abrirAlta(id, prefill) {
   const opt = (arr, sel) => arr.map(x => `<option value="${esc(x)}" ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
   ov.innerHTML = `<div class="box">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <h3 style="margin:0;flex:1">${a ? '✏️ Editar borrador' : prefill ? '✏️ Corregir en el Dragonfish' : '➕ Artículo nuevo para el Dragonfish'}</h3>
+      <h3 style="margin:0;flex:1">${mae ? (prefill && prefill.sku ? '✏️ Editar el artículo' : '➕ Artículo nuevo') : a ? '✏️ Editar borrador' : prefill ? '✏️ Corregir en el Dragonfish' : '➕ Artículo nuevo para el Dragonfish'}</h3>
       <button class="ib" onclick="cerrarAlta()" title="Cerrar sin guardar" aria-label="Cerrar">✕</button>
     </div>
     <div class="al-form">
@@ -1483,7 +1525,7 @@ async function abrirAlta(id, prefill) {
       <label>Descuento %<input id="al-dto" type="number" min="0" max="100" step="0.5" value="${esc(d.descuento_pct ?? '')}"><span class="ayuda">el pactado con el proveedor</span></label>
       <label>Unidad<input id="al-um" list="dl-um" maxlength="3" value="${esc(d.unidad_medida || 'UN')}"><datalist id="dl-um">${v.unidades.map(u => `<option value="${esc(u)}">`).join('')}</datalist></label>
       <label>Temporada<input id="al-temp" maxlength="5" value="${esc(d.temporada || 'BOLSA')}"><span class="ayuda">BOLSA = recargo por bolsa</span></label>
-      <label class="media">Imagen<input id="al-img" class="libre" maxlength="180" placeholder="C:\\FOTOS_PRODUCTOS\\<SKU>.JPG (se completa solo)" value="${esc(d.imagen || '')}"><span class="ayuda">ruta unificada; vacío = C:\\FOTOS_PRODUCTOS\\SKU.JPG</span></label>
+      <label class="media"${mae ? ' style="display:none"' : ''}>Imagen<input id="al-img" class="libre" maxlength="180" placeholder="C:\\FOTOS_PRODUCTOS\\<SKU>.JPG (se completa solo)" value="${esc(d.imagen || '')}"><span class="ayuda">ruta unificada; vacío = C:\\FOTOS_PRODUCTOS\\SKU.JPG</span></label>
 
       <div class="al-sec">Tipificación · lo que tapa la gotera</div>
       <label><span class="req">Nivel 1 · ambiente</span><select id="al-grupo" onchange="grupoCambio()"><option value="">— elegir —</option>${opt(grupos, d.grupo)}</select></label>
@@ -1492,11 +1534,12 @@ async function abrirAlta(id, prefill) {
       <label><span class="req">Origen · país</span><input id="al-origen" list="dl-origen" maxlength="10" value="${esc(d.origen || '')}"><datalist id="dl-origen">${v.origenes.map(o => `<option value="${esc(o.v)}">${o.n} artículos</option>`).join('')}</datalist></label>
       <label><span class="req">Material</span><input id="al-mat" list="dl-mat" maxlength="10" value="${esc(d.material || '')}"><datalist id="dl-mat">${v.materiales.map(o => `<option value="${esc(o.v)}">${o.n} artículos</option>`).join('')}</datalist><span class="ayuda">el principal · sin tildes (ALGODON)</span></label>
       <label class="ancha" style="flex-direction:row;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="al-nuevo" style="width:auto"> Permitir valores nuevos (un grupo, categoría, origen o material que todavía no existe en el catálogo · solo si va a tener 5 artículos o más)</label>
-      <label class="ancha">Notas internas<input id="al-notas" class="libre" maxlength="200" value="${esc(d.notas || '')}" placeholder="no salen en el CSV"></label>
+      <label class="ancha"${mae ? ' style="display:none"' : ''}>Notas internas<input id="al-notas" class="libre" maxlength="200" value="${esc(d.notas || '')}" placeholder="no salen en el CSV"></label>
+      ${mae ? `<div class="ancha mini" style="color:var(--muted)">Se graba en el artículo al tocar Guardar: lo ven enseguida Stock, el POS y Compras en los tres locales.${PROD.maestro !== 'productos' ? ' 🧪 Hasta el 1-ene solo se pueden grabar códigos de prueba (ZZPRUEBA…).' : ''}</div>` : ''}
     </div>
     <div class="al-acc">
       <button class="guardar" onclick="guardarAlta(false)">💾 Guardar</button>
-      ${a || prefill ? '' : '<button class="guardar sec" onclick="guardarAlta(true)" title="Guarda y deja el formulario listo para el siguiente del mismo proveedor y la misma categoría">💾 Guardar y cargar otro</button>'}
+      ${a || (prefill && prefill.sku) ? '' : '<button class="guardar sec" onclick="guardarAlta(true)" title="Guarda y deja el formulario listo para el siguiente del mismo proveedor y la misma categoría">💾 Guardar y cargar otro</button>'}
       <button class="btn" onclick="cerrarAlta()">Cancelar</button>
       <span class="mini" id="al-msg"></span>
     </div>
@@ -1505,7 +1548,7 @@ async function abrirAlta(id, prefill) {
   if (!a && !prefill && !d.sku) setTimeout(() => document.getElementById('al-sku')?.focus(), 50);
   if (d.sku && !a) chequearSku(d.sku);
 }
-function cerrarAlta() { document.getElementById('ov-alta')?.remove(); ALTA.edit = null; }
+function cerrarAlta() { document.getElementById('ov-alta')?.remove(); ALTA.edit = null; ALTA.maestro = false; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('ov-alta')) { e.stopImmediatePropagation(); cerrarAlta(); } }, true);
 function provCambio() {
   const s = document.getElementById('al-prov'), o = s.options[s.selectedIndex];
@@ -1538,9 +1581,12 @@ function chequearSku(v) {
   if (!s) { h.textContent = 'hasta 15 caracteres'; h.className = 'ayuda'; return; }
   _skuT = setTimeout(async () => {
     const { data } = await sb.from('productos_catalogo').select('sku,descripcion,grupo,categoria,clasificacion,origen,material,proveedor_codigo,descripcion_adicional,unidad_medida,temporada,descuento_pct,imagen_ruta').eq('sku', s).maybeSingle();
+    const mae = ALTA.maestro || modoMaestro(s);
     if (data) {
-      h.innerHTML = `ya existe en el Dragonfish (${esc(data.descripcion || '')}) → sale como <b>modificación</b>${ALTA.edit ? '' : ' · <a href="#" onclick="precargarDeCatalogo(); return false">traer sus datos</a>'}`; h.className = 'ayuda mal'; ALTA.ultimo = data;
-    } else { h.textContent = 'código libre → alta nueva'; h.className = 'ayuda ok'; ALTA.ultimo = null; }
+      h.innerHTML = mae ? `ya existe (${esc(data.descripcion || '')}) → se <b>modifica</b>${ALTA.edit || ALTA.maestro ? '' : ' · <a href="#" onclick="precargarDeCatalogo(); return false">traer sus datos</a>'}`
+        : `ya existe en el Dragonfish (${esc(data.descripcion || '')}) → sale como <b>modificación</b>${ALTA.edit ? '' : ' · <a href="#" onclick="precargarDeCatalogo(); return false">traer sus datos</a>'}`;
+      h.className = 'ayuda mal'; ALTA.ultimo = data;
+    } else { h.textContent = mae ? 'código libre → artículo nuevo (se graba directo)' : 'código libre → alta nueva'; h.className = 'ayuda ok'; ALTA.ultimo = null; }
   }, 450);
 }
 function precargarDeCatalogo() {
@@ -1566,6 +1612,7 @@ async function guardarAlta(otro) {
     notas: g('al-notas'), permitir_nuevo: document.getElementById('al-nuevo').checked };
   const falta = [['sku', 'el código'], ['descripcion', 'la descripción'], ['proveedor_codigo', 'el proveedor'], ['grupo', 'el Nivel 1'], ['categoria', 'el Nivel 2'], ['origen', 'el origen'], ['material', 'el material']].filter(([k]) => !p[k]);
   if (falta.length) return alert('Falta ' + falta.map(x => x[1]).join(', ') + '.');
+  if (ALTA.maestro || modoMaestro(p.sku)) return guardarArticulo(p, otro);
   const reg = await registrarQuien('productos.altas_cargar', { accion: p.id ? 'editar alta' : 'cargar alta', alta: p.id || null, sku: p.sku, descripcion: p.descripcion });
   if (!reg) return;
   const m = document.getElementById('al-msg'); m.textContent = 'Guardando…';
@@ -1608,9 +1655,172 @@ async function exportarAltas() {
   toast(`📥 Lote #${data.lote}: ${(data.filas || []).length} renglones`, 'success');
   cargarAltas(); cargarExportados();
 }
+
+// ═══ 🏛 MAESTRO DE ARTÍCULOS (25-nov-2026, plan aprobado por JP: «Sí, aprobado») ══════════════════════════════════════
+// Desde el 1-ene-2027 (se apaga el Dragonfish) Productos es el dueño del maestro: la ficha se edita acá y se graba directo
+// (productos_articulo_guardar / productos_baja, permiso productos.editar = solo Oficina, JP: «solo oficina»). La llave
+// stock_config.maestro dice 'dragon' hasta el corte: mientras tanto solo los códigos de prueba ZZPRUEBA… van directo y el
+// resto sigue con el CSV de ➕ Altas. Cada cambio queda en productos_cambios con quién lo hizo (🕘 Cambios en la ficha).
+async function cargarMaestro() {
+  try {
+    const { data } = await sb.from('stock_config').select('valor').eq('clave', 'maestro').maybeSingle();
+    const v = data && data.valor ? String(data.valor) : 'dragon';
+    if (v !== PROD.maestro) { PROD.maestro = v; if (PROD.ficha) pintarFicha(); }
+  } catch (_) { PROD.maestro = PROD.maestro || 'dragon'; }
+}
+PROD.maestro = 'dragon';
+const modoMaestro = sku => PROD.maestro === 'productos' || /^ZZPRUEBA/i.test(String(sku || '').trim());
+const nombreLindo = s => String(s || '').trim().toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+
+function editarDesdeFicha() {
+  const f = PROD.ficha; if (!f) return;
+  const c = f.catalogo || {}, s = (f.stock || [])[0] || {};
+  abrirAlta(null, { sku: f.sku, descripcion: c.descripcion || s.descripcion, descripcion_adicional: c.descripcion_adicional || s.descripcion_adicional,
+    proveedor_codigo: (c.proveedor_codigo || '').trim(), unidad_medida: c.unidad_medida, temporada: c.temporada, descuento_pct: c.descuento_pct,
+    grupo: (c.grupo || '').trim(), categoria: (c.categoria || '').trim(), clasificacion: (c.clasificacion || '').trim(),
+    origen: (c.origen || '').trim(), material: (c.material || s.material || '').trim() }, { maestro: true });
+}
+async function guardarArticulo(p, otro) {
+  if (!veo('productos.editar')) return toast('Tu perfil no tiene habilitado: ' + FUNC_PROD['productos.editar'] + '. Pedíselo a administración (Hub → Permisos).', 'error');
+  if (!modoMaestro(p.sku)) return alert('Hasta el corte del 1-ene los artículos se cargan en el Dragonfish. Para probar, usá un código que empiece con ZZPRUEBA.');
+  const reg = await registrarQuien('productos.editar', { accion: 'guardar artículo', sku: p.sku, descripcion: p.descripcion });
+  if (!reg) return;
+  const m = document.getElementById('al-msg'); if (m) m.textContent = 'Guardando…';
+  const datos = Object.assign({}, p, { registro: reg.id || null });
+  delete datos.id; delete datos.imagen; delete datos.notas;
+  const { data, error } = await reg.db.rpc('productos_articulo_guardar', { p: datos });
+  if (error) { if (m) m.textContent = ''; return avisoError(error); }
+  toast(data.modo === 'alta' ? `✓ ${data.sku} creado en los tres locales (stock 0)` : data.cambios ? `✓ ${data.sku} guardado · ${data.cambios} dato${data.cambios === 1 ? '' : 's'} cambiado${data.cambios === 1 ? '' : 's'}` : `${data.sku}: no había nada para cambiar`, 'success');
+  if (otro) {
+    ['al-sku', 'al-desc', 'al-adic', 'al-cla'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+    const h = document.getElementById('al-sku-ayuda'); if (h) { h.textContent = 'hasta 15 caracteres'; h.className = 'ayuda'; }
+    if (m) m.textContent = `✓ ${data.sku} guardado. Siguiente…`; document.getElementById('al-sku')?.focus();
+    return;
+  }
+  cerrarAlta();
+  abrirFicha(data.sku);
+}
+async function bajaArticulo(baja) {
+  const f = PROD.ficha; if (!f) return;
+  let motivo = null;
+  if (baja) {
+    motivo = prompt(`¿Dar de baja ${f.sku}?\n\nQueda discontinuado en los tres locales (no se borra: se puede reactivar). Motivo (opcional):`, '');
+    if (motivo === null) return;
+  } else if (!confirm(`¿Reactivar ${f.sku}? Vuelve a estar activo en los tres locales.`)) return;
+  const reg = await registrarQuien('productos.editar', { accion: baja ? 'dar de baja' : 'reactivar', sku: f.sku, motivo: motivo || null });
+  if (!reg) return;
+  const { error } = await reg.db.rpc('productos_baja', { p_sku: f.sku, p_baja: !!baja, p_motivo: motivo || null, p_registro: reg.id || null });
+  if (error) return avisoError(error);
+  toast(baja ? `⛔ ${f.sku} dado de baja` : `↩ ${f.sku} reactivado`, 'success');
+  abrirFicha(f.sku);
+}
+
+// Lo que se carga aparte en la ficha: los pedidos de corrección de ese artículo y el historial de cambios
+const CAMPO_TXT = { alta: 'Alta', descripcion: 'Descripción', descripcion_adicional: 'Descripción adicional', proveedor: 'Proveedor', grupo: 'Nivel 1',
+  categoria: 'Nivel 2', clasificacion: 'Nivel 3', origen: 'Origen', material: 'Material', unidad_medida: 'Unidad', temporada: 'Temporada',
+  descuento_pct: 'Descuento %', linea: 'Línea', precio_venta: 'Precio de venta', costo: 'Costo', compra: 'Compra', discontinuado: 'Baja' };
+const fechaHora = d => d ? new Date(d).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) : '';
+function valorCambio(campo, v) {
+  if (v == null || v === '') return '—';
+  if (campo === 'discontinuado') { const [b, ...m] = String(v).split(' · '); return (b === 'true' ? 'dado de baja' : 'activo') + (m.length ? ' · ' + esc(m.join(' · ')) : ''); }
+  if (['precio_venta', 'costo', 'compra'].includes(campo)) return plata2(Number(v));
+  return esc(v);
+}
+async function extrasFicha(sku) {
+  const pedidos = veo('productos.editar') ? sb.rpc('productos_correcciones_listar', { p_estado: 'pendiente', p_sku: sku, p_limite: 20 }) : null;
+  const hist = sb.rpc('productos_historial', { p_sku: sku, p_limite: 60 });
+  try {
+    const r = pedidos ? await pedidos : null, ep = document.getElementById('f-pedidos');
+    if (ep && PROD.ficha && PROD.ficha.sku === sku) {
+      const l = (r && !r.error && r.data && r.data.filas) || [];
+      ep.innerHTML = l.length ? `<div class="f-sec"><h4>📝 Pedidos de corrección <span class="chip amber">${l.length} pendiente${l.length === 1 ? '' : 's'}</span></h4>
+        <div style="overflow-x:auto"><table class="compacta"><thead><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Pedido</th><th></th></tr></thead><tbody>${l.map(filaPedido.bind(null, 'ficha')).join('')}</tbody></table></div></div>` : '';
+    }
+  } catch (_) {}
+  try {
+    const { data, error } = await hist, eh = document.getElementById('f-historial');
+    if (!eh || !PROD.ficha || PROD.ficha.sku !== sku) return;
+    const l = error ? [] : (data || []);
+    eh.innerHTML = l.length ? `<div class="f-sec"><details><summary style="cursor:pointer"><b>🕘 Cambios</b> <span class="mini">${l.length} · el último ${fechaHora(l[0].at)} por ${esc(nombreLindo(l[0].por_nombre) || '—')}</span></summary>
+      <div style="overflow-x:auto;margin-top:6px"><table class="compacta"><thead><tr><th>Cuándo</th><th>Qué</th><th>Antes</th><th>Ahora</th><th>Quién</th></tr></thead>
+      <tbody>${l.map(h => `<tr><td class="mini">${fechaHora(h.at)}</td><td>${esc(CAMPO_TXT[h.campo] || h.campo)}</td><td class="mini">${h.campo === 'alta' ? '' : valorCambio(h.campo, h.antes)}</td><td>${valorCambio(h.campo, h.despues)}</td><td class="mini">${esc(nombreLindo(h.por_nombre) || '—')}</td></tr>`).join('')}</tbody></table></div></details></div>` : '';
+  } catch (_) {}
+}
+
+// ═══ 📝 PEDIDOS DE CORRECCIÓN (25-nov-2026, JP: «desde los locales, hay que dejarles un botón en el alta del producto para que
+// pueda dejar una "solicitud de modificación" - para cuando le quieran marcar alguna corrección a la oficina») ═══════════════
+// Los locales los dejan desde Stock (las encargadas y las cuentas de los locales no tienen Productos); acá Oficina los ve y los
+// resuelve (productos.editar). Al resolver le llega el aviso a quien lo pidió (o a su local, si lo pidió la cuenta compartida).
+const QUE_TXT = { descripcion: 'Descripción', precio: 'Precio', proveedor: 'Proveedor', categoria: 'Categoría', material: 'Material',
+  origen: 'Origen', foto: 'Foto', codigo: 'Código / código de barras', otro: 'Otra cosa' };
+const PC = { estado: 'pendiente', filas: [] };
+function filtroPedidos(e) {
+  PC.estado = e;
+  document.querySelectorAll('#pc-filtro .fchip').forEach(b => b.classList.toggle('on', b.dataset.e === e));
+  cargarPedidos();
+}
+function pintarBadgePedidos(n) {
+  const b = document.getElementById('pc-badge'); if (!b) return;
+  b.textContent = n > 99 ? '99+' : String(n || ''); b.style.display = n ? '' : 'none';
+}
+async function contarPedidos() {
+  try { const { data } = await sb.rpc('productos_correcciones_listar', { p_estado: 'pendiente', p_limite: 1 }); pintarBadgePedidos(data ? data.pendientes : 0); } catch (_) {}
+}
+function filaPedido(donde, q) {
+  const pend = q.estado === 'pendiente', ficha = donde === 'ficha';
+  return `<tr>
+    <td class="mini">${fechaHora(q.at)}</td>
+    ${ficha ? '' : `<td>${esc(PERM_LOCAL[q.local] || q.local || '—')}</td>`}
+    <td class="mini">${esc(nombreLindo(q.pedido_nombre) || '—')}</td>
+    ${ficha ? '' : `<td class="clic" onclick="abrirFicha('${esc(q.sku)}')" title="Abrir la ficha"><b>${esc(q.sku)}</b><div class="mini">${esc(q.descripcion || '')}</div></td>`}
+    <td>${esc(QUE_TXT[q.que] || q.que)}</td>
+    <td style="min-width:${ficha ? 140 : 220}px;white-space:normal">${esc(q.detalle)}</td>
+    ${pend ? `<td class="acc" style="white-space:nowrap">${permiso('productos.editar') === 'o' ? '' : `<button class="pill-ok" onclick="resolverPedido(${q.id}, 'hecho', '${donde}')">✅ Hecho</button> <button class="pill-no" onclick="resolverPedido(${q.id}, 'descartado', '${donde}')">Descartar</button>`}</td>`
+      : `<td>${q.estado === 'hecho' ? '<span class="chip green">✅ hecho</span>' : '<span class="chip gray">✖ descartado</span>'}</td>
+         <td class="mini" style="white-space:normal">${esc(q.respuesta || '')}</td><td class="mini">${esc(nombreLindo(q.resuelto_nombre) || '')}<br>${fechaHora(q.resuelto_at)}</td>`}
+  </tr>`;
+}
+async function cargarPedidos() {
+  const el = document.getElementById('pc-lista'); if (!el) return;
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const { data, error } = await sb.rpc('productos_correcciones_listar', { p_estado: PC.estado, p_limite: 500 });
+  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
+  pintarBadgePedidos(data.pendientes);
+  PC.filas = data.filas || [];
+  const pend = PC.estado === 'pendiente';
+  if (!PC.filas.length) { el.innerHTML = `<div class="empty">${pend ? '✅ No hay pedidos de corrección pendientes.' : 'Todavía no hay pedidos resueltos.'}</div>`; return; }
+  el.innerHTML = `<div style="overflow-x:auto"><table class="compacta pc-tabla"><thead><tr><th>Cuándo</th><th>Local</th><th>Quién</th><th>Artículo</th><th>Qué</th><th>Pedido</th>${pend ? '<th></th>' : '<th>Estado</th><th>Respuesta</th><th>Resolvió</th>'}</tr></thead>
+    <tbody>${PC.filas.map(filaPedido.bind(null, 'bandeja')).join('')}</tbody></table></div>`;
+}
+async function resolverPedido(id, estado, donde) {
+  const q = (PC.filas || []).find(x => x.id === id) || {};
+  const sku = q.sku || (PROD.ficha && PROD.ficha.sku) || '';
+  const resp = prompt(estado === 'hecho'
+    ? `✅ ¿Ya está corregido${sku ? ' ' + sku : ''}?\n\nRespuesta para quien lo pidió (opcional), por ejemplo «Listo, ya figura con el precio nuevo»:`
+    : `¿Descartar el pedido${sku ? ' de ' + sku : ''}? (no hay que cambiar nada)\n\nContale por qué (opcional):`, '');
+  if (resp === null) return;
+  const reg = await registrarQuien('productos.editar', { accion: estado === 'hecho' ? 'pedido de corrección hecho' : 'pedido de corrección descartado', pedido: id, sku: sku || null });
+  if (!reg) return;
+  const { data, error } = await reg.db.rpc('productos_correccion_resolver', { p_id: id, p_estado: estado, p_respuesta: resp || null, p_registro: reg.id || null });
+  if (error) { avisoError(error); if (donde === 'ficha' && PROD.ficha) extrasFicha(PROD.ficha.sku); else cargarPedidos(); return; }
+  toast(estado === 'hecho' ? '✅ Marcado como hecho: le avisamos a quien lo pidió' : 'Descartado: le avisamos a quien lo pidió', 'success');
+  // aviso a quien lo pidió: a la persona si tiene legajo; si fue la cuenta compartida, a su local (encargada + PC del local)
+  const dest = data.pedido_empleado_id ? { empleado_id: data.pedido_empleado_id } : data.local ? { local: data.local } : null;
+  if (dest && !verComo()) {
+    try {
+      await sb.functions.invoke('enviar-push', { body: Object.assign({}, dest, {
+        app: 'stock', tag: 'prodcorr-' + data.id, url: 'https://claudiaadornosrl-prog.github.io/stock-adorno/?pedidos=1',
+        title: estado === 'hecho' ? '✅ Oficina corrigió ' + data.sku : '📝 Oficina respondió tu pedido de ' + data.sku,
+        body: (estado === 'hecho' ? (QUE_TXT[data.que] || 'El dato') + ' corregido' : 'No hacía falta cambiarlo') + (resp ? ' · ' + resp.slice(0, 120) : '') + (data.resuelto_nombre ? ' · ' + nombreLindo(data.resuelto_nombre) : ''),
+      }) });
+    } catch (_) { /* el aviso no es crítico: queda en la lista de Stock */ }
+  }
+  contarPedidos();
+  if (donde === 'ficha' && PROD.ficha) extrasFicha(PROD.ficha.sku); else cargarPedidos();
+}
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=28"></script>
+<script src="manual.js?v=29"></script>
 <script src="adorno-tablas.js?v=abc48a63"></script>
 </body>
 </html>
