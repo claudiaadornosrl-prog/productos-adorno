@@ -686,6 +686,92 @@ tr.dim { color: var(--muted); }
 .prueba { background: #fef3c7; color: #92400e; text-align: center; padding: 4px; font-size: 12px; font-weight: 600; }
 #ov { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
 #ov .box { background: white; border-radius: 12px; padding: 18px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; }
+/* (26-nov-2026, JP eligió la opción C) ficha del artículo: panel lateral azul + tarjetas sobre fondo gris claro */
+/* en la compu se desplaza solo la columna de las tarjetas (el panel azul queda quieto, sin sticky: la pieza de tablas toma un sticky
+   hermano como si fuera un encabezado y corre los títulos fijos); en el celular se desplaza toda la ventana */
+#ov .box.ficha-c { position: relative; max-width: 1080px; padding: 0; border-radius: 22px; display: grid; grid-template-columns: 290px minmax(0, 1fr); align-items: start;
+  background: linear-gradient(to right, #075985 290px, #f8fafc 290px); max-height: 92vh; overflow: hidden; }
+.fc-lado, .fc-main { max-height: 92vh; overflow-y: auto; }
+.fc-cerrar { position: absolute; top: 12px; right: 22px; z-index: 3; width: 34px; height: 34px; border: none; border-radius: 999px; background: rgba(15,23,42,.07); color: var(--text); font: inherit; font-size: 15px; cursor: pointer; }
+.fc-cerrar:hover { background: rgba(15,23,42,.14); }
+.fc-lado { background: linear-gradient(180deg, #0c4a6e 0%, #075985 100%); color: #fff; padding: 22px 20px; display: flex; flex-direction: column; gap: 12px; border-radius: 22px 0 0 22px; min-width: 0; }
+.fc-foto { width: 100%; height: 220px; object-fit: contain; background: #fff; border-radius: 18px; display: block; }
+.fc-foto.sinfoto { display: flex; align-items: center; justify-content: center; font-size: 46px; color: #cbd5e1; }
+.fc-prov { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.fc-lado h2 { margin: -6px 0 0; font-size: 26px; overflow-wrap: anywhere; }
+.fc-desc { font-size: 16px; opacity: .95; }
+.fc-adic { font-size: 12px; opacity: .8; margin-top: 3px; }
+.fc-estado { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-p { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.14); color: #fff; }
+.fc-p.verde { background: rgba(134,239,172,.22); color: #bbf7d0; } .fc-p.gris { background: rgba(255,255,255,.2); color: #e2e8f0; }
+.fc-p.violeta { background: rgba(196,181,253,.25); color: #ede9fe; } .fc-p.azul { background: rgba(125,211,252,.22); color: #e0f2fe; }
+.fc-p.ambar { background: rgba(253,230,138,.25); color: #fef3c7; }
+.fc-precio { background: rgba(255,255,255,.12); border-radius: 18px; padding: 12px 14px; }
+.fc-precio .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; opacity: .8; }
+.fc-precio .n { font-size: 30px; font-weight: 700; line-height: 1.15; }
+.fc-pmini { font-size: 12px; opacity: .85; margin-top: 2px; }
+.fc-margen { height: 8px; border-radius: 999px; background: rgba(255,255,255,.2); margin-top: 8px; overflow: hidden; }
+.fc-margen span { display: block; height: 100%; border-radius: 999px; background: #86efac; }
+.fc-acc { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-acc button, .fc-acc .pill-foto { font: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.28); color: #fff; }
+.fc-acc button:hover, .fc-acc .pill-foto:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.5); }
+.fc-acc button:disabled { opacity: .55; cursor: default; }
+.fc-nota { font-size: 12px; opacity: .75; }
+.fc-main { padding: 20px 20px 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.fc-main > div:empty { display: none; }
+.fc-card, .ficha-c .f-sec { background: #fff; border-radius: 18px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(15,23,42,.06); border-top: none; min-width: 0; }
+.fc-card h3 { margin: 0 0 10px; font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-right: 0; }
+#f-pedidos h4, #f-pedidos:empty + .fc-card h3 { padding-right: 26px; }
+.fc-card h3 .der { margin-left: auto; font-weight: 400; display: inline-flex; gap: 6px; align-items: center; }
+.fc-card table th, .fc-card table td { padding: 6px 9px; font-size: 13px; }
+.fc-tot { background: var(--primary-bg); color: var(--primary); border-radius: 999px; padding: 3px 11px; font-size: 12px; font-weight: 600; }
+.fc-locales { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fc-local { border-radius: 16px; padding: 12px; text-align: center; }
+.fc-local .lbl { font-size: 12px; font-weight: 600; }
+.fc-local .n { font-size: 30px; font-weight: 700; line-height: 1.1; }
+.fc-local .sub { font-size: 12px; }
+.fc-local.ok { background: var(--green-bg); color: #166534; } .fc-local.bajo { background: var(--red-bg); color: #991b1b; } .fc-local.cero { background: var(--gray-light); color: var(--muted); }
+.fc-nt { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap; }
+.fc-mini-pill { font: inherit; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; cursor: pointer; border: 1px solid rgba(15,23,42,.15); background: rgba(255,255,255,.7); color: inherit; white-space: nowrap; }
+.fc-mini-pill:hover { background: #fff; border-color: currentColor; }
+.fc-escalera { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fc-esc { flex: 1; min-width: 120px; border-radius: 16px; padding: 10px 12px; background: var(--gray-light); }
+.fc-esc .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.fc-esc .n { font-size: 18px; font-weight: 700; }
+.fc-esc.venta { background: var(--primary-bg); } .fc-esc.venta .n { color: var(--primary-dark); }
+.fc-flecha { color: var(--muted); font-size: 12px; text-align: center; line-height: 1.3; }
+.fc-usd, .fc-sug { font-size: 13px; margin-top: 10px; }
+.fc-hist { margin-top: 10px; } .fc-hist summary { cursor: pointer; }
+.fc-hist table { margin-top: 6px; }
+#f-precios-form:not(:empty) { margin-bottom: 12px; }
+.fc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-chip { background: var(--gray-light); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.fc-chip b { font-weight: 600; } .fc-chip span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin-right: 5px; }
+.linea { position: relative; padding-left: 18px; margin: 0; list-style: none; }
+.linea li { position: relative; padding: 0 0 12px; font-size: 13px; }
+.linea li::before { content: ''; position: absolute; left: -14px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--primary); }
+.linea li::after { content: ''; position: absolute; left: -10px; top: 15px; bottom: -2px; width: 1px; background: var(--border); }
+.linea li:last-child::after { display: none; }
+.linea li.pend::before { background: var(--amber); }
+@media (max-width: 760px) {
+  #ov .box.ficha-c { grid-template-columns: minmax(0, 1fr); background: #f8fafc; overflow: auto; }
+  .fc-lado, .fc-main { max-height: none; overflow: visible; }
+  .fc-lado { border-radius: 22px 22px 0 0; }
+  .fc-cerrar { right: 12px; }
+  .fc-foto { height: 200px; }
+  .fc-cerrar { background: rgba(15,23,42,.5); color: #fff; } .fc-cerrar:hover { background: rgba(15,23,42,.65); }
+  .fc-main { padding: 14px 12px 16px; }
+  #f-pedidos h4, #f-pedidos:empty + .fc-card h3 { padding-right: 0; }
+}
+@media (max-width: 520px) {
+  .fc-locales { grid-template-columns: minmax(0, 1fr); }
+  .fc-local { display: grid; grid-template-columns: 1fr auto; text-align: left; align-items: center; column-gap: 10px; }
+  .fc-local .lbl { grid-column: 1; } .fc-local .n { grid-column: 2; grid-row: 1 / span 2; font-size: 26px; }
+  .fc-local .sub { grid-column: 1; } .fc-nt { grid-column: 1 / -1; justify-content: flex-start; }
+  .fc-escalera { flex-direction: column; align-items: stretch; gap: 4px; } .fc-esc { min-width: 0; }
+  .fc-flecha { display: flex; justify-content: center; gap: 6px; } .fc-flecha br { display: none; } .fc-flecha .fl { order: -1; transform: rotate(90deg); }
+}
 @media (max-width: 600px) { main { padding: 10px; } th, td { padding: 8px 8px; font-size: 13px; } header h1 { font-size: 16px; } }
 </style>
 </head>
@@ -1300,6 +1386,39 @@ function cerrarFicha() { document.getElementById('ov')?.remove(); PROD.ficha = n
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && PROD.ficha && !document.getElementById('jg-overlay')) cerrarFicha(); });
 function onJuegoCambio() { if (PROD.ficha) abrirFicha(PROD.ficha.sku); }
 
+// (26-nov-2026, JP eligió la opción C: «la veo muy básica y difícil de leer porque está todo en blanco») Ficha con panel
+// lateral azul fijo (foto, código, precio, margen y acciones) y tarjetas a la derecha: dónde hay, de la compra a la venta,
+// ficha técnica, juego, proveedores y movimientos. Mismos datos y botones que antes; solo cambia cómo se ve.
+const FC_ICO_LAPIZ = '<svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+function fcLocal(k, nom, s, min, nt, decide) {
+  const stock = s ? Number(s.stock) : null;
+  let clase = 'ok', sub;
+  if (stock == null) { clase = 'cero'; sub = 'sin fila de stock'; }
+  else if (min != null && stock < Number(min)) { clase = 'bajo'; sub = `mínimo ${_n(min)} · faltan ${_n(Number(min) - stock)}`; }
+  else if (stock <= 0) { clase = 'cero'; sub = min != null ? `mínimo ${_n(min)}` : k === 'oficina' ? 'depósito' : 'sin mínimo'; }
+  else sub = min != null ? `mínimo ${_n(min)}` : k === 'oficina' ? 'depósito' : 'sin mínimo';
+  if (nt) clase = 'cero';
+  const trabaja = k === 'oficina' ? ''
+    : nt ? `<div class="fc-nt"><span class="chip red" title="${esc(nt.motivo || '')}">🚫 no lo trabaja</span>${decide ? ` <button class="ib" onclick="volverATrabajar('${k}')" title="Vuelve a trabajarlo" aria-label="Vuelve a trabajarlo">↩</button>` : ''}</div>`
+    : decide ? `<div class="fc-nt"><button class="fc-mini-pill" onclick="noTrabaja('${k}')" title="En este local no se trabaja: deja de sugerirse en la redistribución">🚫 No lo trabajamos</button></div>` : '';
+  return `<div class="fc-local ${clase}"><div class="lbl">${esc(nom.replace(' · depósito', ''))}</div><div class="n">${stock == null ? '—' : _n(stock)}</div><div class="sub">${sub}</div>${trabaja}</div>`;
+}
+function fcMovimientos(f, verCosto) {
+  const items = [];
+  for (const r of f.ultimas_entradas || []) {
+    const dest = r.destino || '—';
+    items.push({ fecha: r.fecha, html: `entraron <b>${_n(r.cantidad)}</b> a ${esc(dest)} <span class="mini">· remito ${esc(r.remito || '')}${r.proveedor ? ' · ' + esc(r.proveedor) : ''}</span>` });
+  }
+  if (verCosto) {
+    const costos = (f.precios?.historia || []).filter(h => h.lista === 'COSTO').sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    costos.forEach((h, i) => { const ant = costos[i + 1];
+      if (ant) items.push({ fecha: h.fecha, html: `nueva lista del proveedor: costo ${plata2(ant.precio)} → <b>${plata2(h.precio)}</b>` }); });
+  }
+  items.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+  const pend = (f.pedidos_pendientes || []).map(p => `<li class="pend"><b>Pedido y no entregado</b> · pedido ${esc(String(p.pedido))}${p.prueba ? ' (🧪)' : ''} · ${esc(p.proveedor || '')} · faltan <b>${_n(p.pendiente)}</b></li>`).join('');
+  if (!items.length && !pend) return '<p class="mini">Sin remitos registrados ni cambios de lista.</p>';
+  return `<ul class="linea">${pend}${items.slice(0, 8).map(x => `<li><b>${fechaCorta(x.fecha)}</b> · ${x.html}</li>`).join('')}</ul>`;
+}
 function pintarFicha() {
   const f = PROD.ficha, c = f.catalogo || {}, st = f.stock || [];
   const desc = c.descripcion || st[0]?.descripcion || '(sin descripción)';
@@ -1310,93 +1429,96 @@ function pintarFicha() {
   // (14-nov-2026) permisos del Hub (la base además no manda el costo ni los proveedores a quien no los tiene)
   const verCosto = veo('productos.ver_costo') && !f.sin_costo, verProv = veo('productos.ficha_proveedores') && !f.sin_proveedores, editaEq = veo('productos.equiv_editar');
   const maestro = modoMaestro(f.sku);   // (25-nov) Productos dueño del maestro: desde el 1-ene todos; hasta entonces solo ZZPRUEBA…
+  const edita = maestro && veo('productos.editar'), cambiaPrecio = maestro && veo('productos.precio');
+  const costo = Number(f.precios?.costo) || null, compra = Number(f.precios?.compra) || null;
+  const margen = verCosto && precioVenta && costo ? (precioVenta / 1.21 / costo - 1) * 100 : null;
+  const total = st.reduce((a, s) => a + (Number(s.stock) || 0), 0);
+  const sg = verCosto ? f.sugerido : null;
+  const sgTxt = sg && sg.sugerido ? (precioVenta > 0 && Math.abs(sg.sugerido / precioVenta - 1) < 0.00005 ? `sugerido ${plata(sg.sugerido)}: igual al de hoy` : `sugerido por regla: ${plata(sg.sugerido)}`) : '';
+  const nivel = [c.grupo, c.categoria, c.clasificacion].filter(Boolean).map(esc).join(' › ');
+  const chip = (lbl, val) => `<div class="fc-chip"><span>${lbl}</span><b>${val}</b></div>`;
   const ov = document.getElementById('ov');
-  ov.innerHTML = `<div class="box">
-    <div class="f-head">
-      <div class="f-foto">${f.foto ? `<img src="${esc(f.foto)}" alt="Foto de ${esc(f.sku)}">` : '<div class="sinfoto">🖼</div>'}${maestro && veo('productos.editar') ? `<button class="pill-foto" onclick="elegirFoto()" title="Subir una foto nueva: desde la compu, o sacándola con el celular">📷 ${f.foto ? 'Cambiar foto' : 'Subir foto'}</button>` : ''}</div>
-      <div style="flex:1;min-width:0">
-        <div class="mini">${esc(prov)}</div>
-        <h2 style="margin:2px 0 4px;font-size:20px">${esc(f.sku)}</h2>
-        <div style="font-size:15px">${esc(desc)}${c.descripcion_adicional ? `<div class="mini">${esc(c.descripcion_adicional)}</div>` : ''}</div>
-        <div style="margin-top:6px">${disc ? '<span class="chip gray">⛔ discontinuado</span> ' : ''}${(f.receta || []).length ? '<span class="chip" style="background:#ede9fe;color:#6d28d9">🧩 juego</span> ' : ''}${(f.pieza_de || []).length ? '<span class="chip" style="background:#e0f2fe;color:#0369a1">🔹 pieza de un juego</span>' : ''}${maestro && veo('productos.editar') ? ` <button class="pill-baja${disc ? ' re' : ''}" onclick="bajaArticulo(${disc ? 'false' : 'true'})" title="${disc ? 'Vuelve a estar activo en los tres locales' : 'Queda discontinuado en los tres locales (no se borra nada)'}">${disc ? '↩ Reactivar' : '⛔ Dar de baja'}</button>` : ''}</div>
+  ov.innerHTML = `<div class="box ficha-c">
+    <button class="fc-cerrar" onclick="cerrarFicha()" title="Cerrar" aria-label="Cerrar">✕</button>
+    <aside class="fc-lado">
+      ${f.foto ? `<img class="fc-foto" src="${esc(f.foto)}" alt="Foto de ${esc(f.sku)}">` : '<div class="fc-foto sinfoto">🖼</div>'}
+      <div class="fc-prov">${esc(prov)}</div>
+      <h2>${esc(f.sku)}</h2>
+      <div class="fc-desc">${esc(desc)}${c.descripcion_adicional ? `<div class="fc-adic">${esc(c.descripcion_adicional)}</div>` : ''}</div>
+      <div class="fc-estado">${disc ? '<span class="fc-p gris">⛔ discontinuado</span>' : '<span class="fc-p verde">● activo</span>'}${(f.receta || []).length ? '<span class="fc-p violeta">🧩 juego</span>' : ''}${(f.pieza_de || []).length ? '<span class="fc-p azul">🔹 pieza de un juego</span>' : ''}${maestro && PROD.maestro !== 'productos' ? '<span class="fc-p ambar" title="Código de prueba: se graba de verdad, pero solo los ZZPRUEBA… hasta el 1-ene">🧪 prueba</span>' : ''}</div>
+      <div class="fc-precio">
+        <div class="lbl">Precio de venta · los tres locales</div>
+        <div class="n">${plata(precioVenta)}</div>
+        ${margen != null ? `<div class="fc-pmini">Margen sobre costo ${_n(margen)} %${sgTxt ? ' · ' + sgTxt : ''}</div><div class="fc-margen" title="Margen sobre costo"><span style="width:${Math.max(4, Math.min(100, margen / 2))}%"></span></div>` : sgTxt ? `<div class="fc-pmini">${sgTxt}</div>` : ''}
       </div>
-      <button class="btn" onclick="cerrarFicha()">✕</button>
-    </div>
-
-    ${maestro ? `<div class="f-sec"><h4>📋 Datos del artículo <span class="der mini">${veo('productos.editar') ? `se corrigen acá <button class="ib" onclick="editarDesdeFicha()" title="Editar la ficha: descripción, proveedor, categoría, origen, material…" aria-label="Editar la ficha"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : 'los corrige Oficina'}${PROD.maestro !== 'productos' ? ' <span class="chip amber" title="Código de prueba: se graba de verdad, pero solo los ZZPRUEBA… hasta el 1-ene">🧪 prueba</span>' : ''}</span></h4>`
-      : `<div class="f-sec"><h4>📋 Datos del Dragonfish <span class="der mini">se corrigen con el importador de altas del Dragonfish${f.catalogo && veo('productos.altas_cargar') ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</span></h4>`}
-      ${f.catalogo ? `<div class="kv">
-        <div><b>Grupo › Categoría › Clasificación</b>${[c.grupo, c.categoria, c.clasificacion].filter(Boolean).map(esc).join(' › ') || '<span style="color:var(--amber)">🏷 sin categoría</span>'}</div>
-        <div><b>Origen</b>${esc(c.origen || '—')}</div>
-        <div><b>Material</b>${esc(c.material || '—')}</div>
-        <div><b>Unidad</b>${esc(c.unidad_medida || '—')}</div>
-        <div><b>Temporada</b>${esc(c.temporada || '—')}</div>
-        <div><b>Descuento del proveedor</b>${c.descuento_pct != null ? _n(c.descuento_pct) + ' %' : '—'}</div>
-        <div><b>Alta</b>${fechaCorta(c.fecha_alta) || '—'}</div>
-        <div><b>Última modificación</b>${fechaCorta(c.fecha_modif) || '—'}</div>
-      </div>` : maestro ? '<div class="mini">Todavía no tiene ficha: tocá ✏️ para completarla.</div>' : '<div class="mini">Todavía no está en el catálogo sincronizado (corre con sync_mercaderia.py).</div>'}
-    </div>
-    <div id="f-pedidos"></div>
-
-    <div class="f-sec"><h4>📦 Stock y reposición</h4>
-      <table><thead><tr><th>Local</th><th class="num">Stock</th><th class="num">Mínimo</th><th>¿Lo trabaja?</th></tr></thead>
-      <tbody>${LOCALES.map(([k, nom]) => {
-        const s = st.find(x => x.local === k); const min = (f.minimos || {})[k];
-        const bajo = s && min != null && Number(s.stock) < Number(min);
-        const decide = veoEn('productos.no_trabaja', k);   // (14-nov) Hub, por local
-        const trabaja = k === 'oficina' ? '<span class="mini">—</span>'
-          : nt[k] ? `<span class="chip red" title="${esc(nt[k].motivo || '')}">🚫 no lo trabaja</span>${decide ? ` <button class="btn" onclick="volverATrabajar('${k}')">↩</button>` : ''}`
-          : decide ? `<button class="btn" onclick="noTrabaja('${k}')">🚫 No lo trabajamos</button>` : '<span class="mini">sí</span>';
-        return `<tr><td>${nom}</td><td class="num" style="${bajo ? 'color:var(--red);font-weight:700' : ''}">${s ? _n(s.stock) : '—'}</td>
-          <td class="num">${min != null ? _n(min) : '—'}</td><td>${trabaja}</td></tr>`;
-      }).join('')}</tbody></table>
-    </div>
-
-    <div class="f-sec"><h4>💲 Precios${maestro && veo('productos.precio') ? ` <span class="der mini">se cambian acá <button class="ib" onclick="editarPreciosFicha()" title="Cambiar el precio de venta (los tres locales)${verCosto ? ', el costo o la compra' : ''}" aria-label="Cambiar los precios"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></span>` : ''}</h4>
-      <div id="f-precios-form"></div>
-      <div class="kv">
-        <div><b>Venta</b>${plata(precioVenta)}</div>
-        ${verCosto ? `<div><b>Lista COMPRA (proveedor)</b>${plata2(f.precios?.compra)}</div>
-        <div><b>Lista COSTO (con descuento)</b>${plata2(f.precios?.costo)}</div>
-        ${f.precios?.costo_usd != null ? `<div><b>Costo en dólares</b>${usd(f.precios.costo_usd)}</div>` : ''}
-        <div><b>Margen s/ costo</b>${precioVenta && f.precios?.costo ? _n((precioVenta / 1.21 / f.precios.costo - 1) * 100) + ' %' : '—'}</div>
-        ${f.sugerido ? `<div style="grid-column:1/-1"><b>Sugerido por regla</b>${textoSugerido(f.sugerido, precioVenta)}</div>` : ''}` : ''}
+      <div class="fc-acc">
+        ${edita ? `<button onclick="editarDesdeFicha()" title="Editar la ficha: descripción, proveedor, categoría, origen, material…">✏️ Editar</button>`
+          : !maestro && f.catalogo && veo('productos.altas_cargar') ? `<button onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador del Dragonfish">✏️ Corregir</button>` : ''}
+        ${cambiaPrecio ? `<button onclick="editarPreciosFicha(); document.getElementById('fc-precios')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" title="Cambiar el precio de venta (los tres locales)${verCosto ? ', el costo o la compra' : ''}">💲 Precio</button>` : ''}
+        ${edita ? `<button class="pill-foto" onclick="elegirFoto()" title="Subir una foto nueva: desde la compu, o sacándola con el celular">📷 ${f.foto ? 'Cambiar foto' : 'Subir foto'}</button>` : ''}
+        ${edita ? `<button onclick="bajaArticulo(${disc ? 'false' : 'true'})" title="${disc ? 'Vuelve a estar activo en los tres locales' : 'Queda discontinuado en los tres locales (no se borra nada)'}">${disc ? '↩ Reactivar' : '⛔ Dar de baja'}</button>` : ''}
       </div>
-      ${verCosto && (f.precios?.historia || []).length ? `<details style="margin-top:6px"><summary class="mini" style="cursor:pointer">Historia de listas</summary>
-        <table style="margin-top:6px"><tbody>${f.precios.historia.map(h => `<tr><td>${fechaCorta(h.fecha)}</td><td>${esc(h.lista)}</td><td class="num">${plata2(h.precio)}</td></tr>`).join('')}</tbody></table></details>` : ''}
-    </div>
+      ${!maestro ? '<div class="fc-nota">Hasta el 1-ene los datos y los precios se cargan en el Dragonfish.</div>' : ''}
+    </aside>
+    <div class="fc-main">
+      <div id="f-pedidos"></div>
 
-    <div class="f-sec"><h4>🧩 Juego / desglose
-        <span class="der">${!veo('productos.juegos') ? '' : (f.receta || []).length
-          ? `${f.receta.some(p => !p.confirmado) ? `<button class="act" onclick="confirmarJuego('${esc(f.sku)}')">✔ Confirmar receta</button> ` : ''}<button class="btn" onclick="editarRecetaFicha()">✏️ Editar receta</button>`
-          : (f.pieza_de || []).length ? '' : `<button class="btn" onclick="editarJuego('${esc(f.sku)}', '${esc(f.sku)}')">➕ Se vende desglosado</button>`}</span></h4>
-      ${(f.receta || []).length ? `<p class="mini">El proveedor lo factura como un juego; al entrar se suman también estas piezas${f.receta.some(p => !p.confirmado) ? ' <b style="color:var(--amber)">(receta sin confirmar: todavía no entra al TXT)</b>' : ''}:</p>
-        <table><tbody>${f.receta.map(p => `<tr class="clic" onclick="abrirFicha('${esc(p.sku)}')"><td><b>${_n(p.cantidad)} × ${esc(p.sku)}</b></td><td class="mini">${esc(p.descripcion || '')}</td></tr>`).join('')}</tbody></table>`
-      : (f.pieza_de || []).length ? `<p class="mini">Es una pieza que sale de desglosar:</p>
-        <table><tbody>${f.pieza_de.map(p => `<tr class="clic" onclick="abrirFicha('${esc(p.juego)}')"><td><b>${esc(p.juego)}</b> (${_n(p.cantidad)} por juego)</td><td class="mini">${esc(p.descripcion || '')}</td></tr>`).join('')}</tbody></table>`
-      : '<p class="mini">Se compra y se vende tal cual.</p>'}
-    </div>
+      <section class="fc-card"><h3>📦 Dónde hay <span class="der fc-tot">${_n(total)} u. en total</span></h3>
+        <div class="fc-locales">${LOCALES.map(([k, nom]) => fcLocal(k, nom, st.find(x => x.local === k), (f.minimos || {})[k], nt[k], veoEn('productos.no_trabaja', k))).join('')}</div>
+      </section>
 
-    ${verProv ? `<div class="f-sec"><h4>🔗 Cómo lo factura cada proveedor <span class="der">${editaEq ? '<button class="btn" onclick="nuevaEquivFicha()">➕ Agregar</button>' : ''}</span></h4>
-      ${(f.equivalencias || []).length ? `<table><thead><tr><th>Proveedor</th><th>Su código</th><th>Su descripción</th><th class="num">Pack</th><th class="num">Usada</th><th></th></tr></thead>
-        <tbody>${f.equivalencias.map(e => `<tr>
-          <td class="mini">${esc(e.proveedor || e.cuit)}</td><td>${esc(e.codigo || '—')}</td><td class="mini">${esc(e.descripcion || '—')}</td>
-          <td class="num">${Number(e.pack || 1) > 1 ? '📦 ×' + _n(e.pack) : '1'}</td>
-          <td class="num mini">${e.veces ? e.veces + '×' : '—'}${e.ultima ? '<br>' + fechaCorta(e.ultima) : ''}</td>
-          <td>${e.partes > 1 ? '<span class="mini" title="Es parte de un set fraccionado: se edita desde Compras → 🔗 Equivalencias">set ×' + e.partes + '</span>'
-                             : editaEq ? `<button class="btn" onclick="borrarEquivFicha(${e.id})" title="Borrar">🗑</button>` : ''}</td></tr>`).join('')}</tbody></table>`
-        : '<p class="mini">Sin equivalencias: el proveedor lo factura con nuestro mismo código, o nunca se cargó cómo lo llama.</p>'}
-      <div id="eq-form"></div>
-    </div>` : ''}
+      <section class="fc-card" id="fc-precios"><h3>💲 ${verCosto ? 'De la compra a la venta' : 'Precio'}${cambiaPrecio ? ` <span class="der"><button class="ib" onclick="editarPreciosFicha()" title="Cambiar el precio de venta (los tres locales)${verCosto ? ', el costo o la compra' : ''}" aria-label="Cambiar los precios">${FC_ICO_LAPIZ}</button></span>` : ''}</h3>
+        <div id="f-precios-form"></div>
+        ${verCosto ? `<div class="fc-escalera">
+          <div class="fc-esc"><div class="lbl">Compra (proveedor)</div><div class="n">${plata2(compra)}</div></div>
+          <div class="fc-flecha">${compra && costo && compra > costo ? '−' + _n((1 - costo / compra) * 100) + ' %' : ''}<br><span class="fl">→</span></div>
+          <div class="fc-esc"><div class="lbl">Costo (con descuento)</div><div class="n">${plata2(costo)}</div></div>
+          <div class="fc-flecha">${costo && precioVenta ? '× ' + Number(precioVenta / costo).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : ''}<br><span class="fl">→</span></div>
+          <div class="fc-esc venta"><div class="lbl">Venta</div><div class="n">${plata(precioVenta)}</div></div>
+        </div>
+        ${f.precios?.costo_usd != null ? `<div class="fc-usd">Costo en dólares: <b>${usd(f.precios.costo_usd)}</b></div>` : ''}
+        ${f.sugerido ? `<div class="fc-sug">📐 ${textoSugerido(f.sugerido, precioVenta)}</div>` : ''}
+        ${(f.precios?.historia || []).length ? `<details class="fc-hist"><summary class="mini">Historia de listas</summary>
+          <table><thead><tr><th>Desde</th><th>Lista</th><th class="num">Precio</th></tr></thead><tbody>${f.precios.historia.map(h => `<tr><td>${fechaCorta(h.fecha)}</td><td>${esc(h.lista)}</td><td class="num">${plata2(h.precio)}</td></tr>`).join('')}</tbody></table></details>` : ''}`
+        : `<div class="fc-escalera"><div class="fc-esc venta"><div class="lbl">Venta (los tres locales)</div><div class="n">${plata(precioVenta)}</div></div></div>`}
+      </section>
 
-    <div class="f-sec"><h4>🚚 Últimas entradas</h4>
-      ${(f.ultimas_entradas || []).length ? `<table><thead><tr><th>Fecha</th><th>Remito</th><th>Proveedor</th><th>Destino</th><th class="num">Cant.</th></tr></thead>
-        <tbody>${f.ultimas_entradas.map(r => `<tr><td>${fechaCorta(r.fecha)}</td><td>${esc(r.remito)}</td><td class="mini">${esc(r.proveedor || '—')}</td>
-          <td class="mini">${esc(r.destino || '—')}</td><td class="num">${_n(r.cantidad)}</td></tr>`).join('')}</tbody></table>`
-        : '<p class="mini">Sin remitos registrados.</p>'}
-      ${(f.pedidos_pendientes || []).length ? `<p class="mini" style="margin-top:8px">📝 Pedido y todavía no entregado: ${f.pedidos_pendientes.map(p => `pedido ${p.pedido}${p.prueba ? ' (🧪)' : ''} · ${esc(p.proveedor || '')} · <b>${_n(p.pendiente)}</b>`).join(' · ')}</p>` : ''}
+      <section class="fc-card"><h3>📋 Ficha técnica <span class="der mini">${maestro ? (veo('productos.editar') ? `se corrige con <button class="ib" onclick="editarDesdeFicha()" title="Editar la ficha" aria-label="Editar la ficha">${FC_ICO_LAPIZ}</button>` : 'la corrige Oficina')
+          : `se corrige con el importador del Dragonfish${f.catalogo && veo('productos.altas_cargar') ? ` <button class="ib" onclick="corregirDesdeFicha()" title="Corregir categoría, origen o material: arma un renglón de modificación para el CSV del importador" aria-label="Corregir en el Dragonfish">${FC_ICO_LAPIZ}</button>` : ''}`}</span></h3>
+        ${f.catalogo ? `<div class="fc-chips">
+          ${chip('Rubro', nivel || '<span style="color:var(--amber)">🏷 sin categoría</span>')}
+          ${chip('Origen', esc(c.origen || '—'))}${chip('Material', esc(c.material || '—'))}${chip('Unidad', esc(c.unidad_medida || '—'))}
+          ${chip('Temporada', esc(c.temporada || '—'))}${chip('Desc. proveedor', c.descuento_pct != null ? _n(c.descuento_pct) + ' %' : '—')}
+          ${chip('Alta', fechaCorta(c.fecha_alta) || '—')}${chip('Modificado', fechaCorta(c.fecha_modif) || '—')}
+        </div>` : `<p class="mini">${maestro ? 'Todavía no tiene ficha: tocá ✏️ Editar para completarla.' : 'Todavía no está en el catálogo sincronizado (corre con sync_mercaderia.py).'}</p>`}
+      </section>
+
+      <section class="fc-card"><h3>🧩 Juego / desglose
+          <span class="der">${!veo('productos.juegos') ? '' : (f.receta || []).length
+            ? `${f.receta.some(p => !p.confirmado) ? `<button class="pill-pri" onclick="confirmarJuego('${esc(f.sku)}')">✔ Confirmar receta</button> ` : ''}<button class="pill-no" onclick="editarRecetaFicha()">✏️ Editar receta</button>`
+            : (f.pieza_de || []).length ? '' : `<button class="pill-no" onclick="editarJuego('${esc(f.sku)}', '${esc(f.sku)}')">➕ Se vende desglosado</button>`}</span></h3>
+        ${(f.receta || []).length ? `<p class="mini">El proveedor lo factura como un juego; al entrar se suman también estas piezas${f.receta.some(p => !p.confirmado) ? ' <b style="color:var(--amber)">(receta sin confirmar: todavía no entra al TXT)</b>' : ''}:</p>
+          <table><tbody>${f.receta.map(p => `<tr class="clic" onclick="abrirFicha('${esc(p.sku)}')"><td><b>${_n(p.cantidad)} × ${esc(p.sku)}</b></td><td class="mini">${esc(p.descripcion || '')}</td></tr>`).join('')}</tbody></table>`
+        : (f.pieza_de || []).length ? `<p class="mini">Es una pieza que sale de desglosar:</p>
+          <table><tbody>${f.pieza_de.map(p => `<tr class="clic" onclick="abrirFicha('${esc(p.juego)}')"><td><b>${esc(p.juego)}</b> (${_n(p.cantidad)} por juego)</td><td class="mini">${esc(p.descripcion || '')}</td></tr>`).join('')}</tbody></table>`
+        : '<p class="mini">Se compra y se vende tal cual.</p>'}
+      </section>
+
+      ${verProv ? `<section class="fc-card"><h3>🔗 Cómo lo factura cada proveedor <span class="der">${editaEq ? '<button class="pill-no" onclick="nuevaEquivFicha()">➕ Agregar</button>' : ''}</span></h3>
+        ${(f.equivalencias || []).length ? `<div style="overflow-x:auto"><table><thead><tr><th>Proveedor</th><th>Su código</th><th>Su descripción</th><th class="num">Pack</th><th class="num">Usada</th><th></th></tr></thead>
+          <tbody>${f.equivalencias.map(e => `<tr>
+            <td class="mini">${esc(e.proveedor || e.cuit)}</td><td>${esc(e.codigo || '—')}</td><td class="mini">${esc(e.descripcion || '—')}</td>
+            <td class="num">${Number(e.pack || 1) > 1 ? '📦 ×' + _n(e.pack) : '1'}</td>
+            <td class="num mini">${e.veces ? e.veces + '×' : '—'}${e.ultima ? '<br>' + fechaCorta(e.ultima) : ''}</td>
+            <td>${e.partes > 1 ? '<span class="mini" title="Es parte de un set fraccionado: se edita desde Compras → 🔗 Equivalencias">set ×' + e.partes + '</span>'
+                               : editaEq ? `<button class="ib rojo" onclick="borrarEquivFicha(${e.id})" title="Borrar" aria-label="Borrar">🗑</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+          : '<p class="mini">Sin equivalencias: el proveedor lo factura con nuestro mismo código, o nunca se cargó cómo lo llama.</p>'}
+        <div id="eq-form"></div>
+      </section>` : ''}
+
+      <section class="fc-card"><h3>🚚 Movimientos</h3>${fcMovimientos(f, verCosto)}</section>
+      <div id="f-historial"></div>
     </div>
-    <div id="f-historial"></div>
   </div>`;
   extrasFicha(f.sku);
 }
@@ -2477,7 +2599,7 @@ function pintarSugeridoAlta() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=33"></script>
+<script src="manual.js?v=34"></script>
 <script src="adorno-tablas.js?v=abc48a63"></script>
 </body>
 </html>

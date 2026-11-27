@@ -48,12 +48,14 @@ function _manualSecciones() {
     },
     {
       icon: '📦', titulo: 'La ficha',
-      desc: 'Todo junto: stock, mínimos, precios, juegos, proveedores y últimas entradas.',
+      desc: 'Todo junto en una ventana: a la izquierda, en azul, la foto, el código, el precio y los botones; a la derecha, en tarjetas, el stock, los precios, la ficha técnica, juegos, proveedores y movimientos.',
       pasos: [
-        'Stock y reposición: el stock por local y el mínimo de reposición cargado en el Dragonfish. En rojo, lo que está por debajo del mínimo.',
-        '🚫 No lo trabajamos: el local deja de recibir sugerencias de traslado de ese artículo (lo mismo que en Stock → 🔄). ↩ lo vuelve atrás. Lo puede marcar el admin o la encargada de ese local.',
-        'Precios: venta, lista COMPRA del proveedor y lista COSTO (con el descuento pactado), con su historia. El margen se calcula sobre la venta sin IVA.',
-        'Últimas entradas: los remitos en los que entró, y si hay pedidos a proveedores todavía sin entregar.',
+        'Panel azul (izquierda): foto, proveedor, código y descripción; si está activo o discontinuado (y si es un juego o una pieza de un juego); el precio de venta de los tres locales y, si ves el costo, el margen sobre costo con su barrita y el sugerido por regla. Abajo, los botones: ✏️ Editar (o ✏️ Corregir, mientras se carga en el Dragonfish), 💲 Precio, 📷 Foto y ⛔ Dar de baja; cada uno aparece solo si tu perfil lo tiene. En la compu el panel queda quieto y se desplazan las tarjetas; en el celular va arriba de todo. ✕ (o Escape) cierra la ficha.',
+        '📦 Dónde hay: una tarjeta por local con el stock en grande, y arriba el total. Verde = está bien; rojo = por debajo del mínimo de reposición cargado en el Dragonfish (dice cuántos faltan); gris = sin stock, o el local no lo trabaja.',
+        '🚫 No lo trabajamos (en la tarjeta del local): el local deja de recibir sugerencias de traslado de ese artículo (lo mismo que en Stock → 🔄). ↩ lo vuelve atrás. Lo puede marcar el admin o la encargada de ese local.',
+        '💲 De la compra a la venta (si ves el costo): la escalera lista COMPRA del proveedor → descuento pactado → lista COSTO → cuántas veces el costo → venta. Abajo, el costo en dólares (si es importado), el sugerido por regla y la historia de listas. El margen se calcula sobre la venta sin IVA. Quien no ve el costo ve solo la venta.',
+        '📋 Ficha técnica: rubro (grupo › categoría › clasificación), origen, material, unidad, temporada, descuento del proveedor, alta y última modificación.',
+        '🚚 Movimientos: una línea de tiempo con los remitos en los que entró, los cambios de lista del proveedor (si ves el costo) y, arriba en naranja, los pedidos a proveedores todavía sin entregar.',
       ],
     },
     {
@@ -78,7 +80,7 @@ function _manualSecciones() {
       desc: 'Artículos activos a los que les falta grupo o categoría en el Dragonfish.',
       pasos: [
         'Se venden igual, pero en el reporte de ventas caen en "SIN GRUPO". La lista los agrupa por proveedor.',
-        'Para completar uno: abrí su ficha y tocá ✏️ en "Datos del Dragonfish". Se arma un renglón de modificación en ➕ Altas con los datos que ya tiene; completás categoría, origen y material y listo.',
+        'Para completar uno: abrí su ficha y tocá ✏️ Corregir (en el panel azul) o el ✏️ de «📋 Ficha técnica». Se arma un renglón de modificación en ➕ Altas con los datos que ya tiene; completás categoría, origen y material y listo.',
       ],
     },
     {
@@ -109,11 +111,11 @@ function _manualSecciones() {
       icon: '🏛', titulo: 'Editar el artículo (desde el 1-ene-2027)',
       desc: 'Cuando se apaga el Dragonfish, Productos pasa a ser el dueño de los artículos y los precios: se cargan y se corrigen acá, y lo ven enseguida Stock, el POS y Compras en los tres locales. Lo hace solo Oficina.',
       pasos: [
-        'En la ficha, «📋 Datos del artículo» → ✏️: el mismo formulario de altas (descripción, proveedor, Nivel 1/2/3, origen, material…); 💾 Guardar lo graba directo. El precio de venta es uno solo para los tres locales.',
+        'En la ficha, ✏️ Editar (en el panel azul) o el ✏️ de «📋 Ficha técnica»: el mismo formulario de altas (descripción, proveedor, Nivel 1/2/3, origen, material…); 💾 Guardar lo graba directo. El precio de venta es uno solo para los tres locales.',
         '➕ Artículo nuevo (pestaña ➕ Altas): el mismo formulario, con «💲 Precios» al final: la venta (una sola para los tres locales), y el costo y la compra si los ves. 💾 Guardar crea el artículo en los tres locales con stock 0 y con esos precios, todo junto: si un precio está mal escrito no se graba nada. Si dejás la venta vacía, pregunta si lo creás igual y se la ponés después desde la ficha. Los precios aparecen solo para un código nuevo: el de uno que ya existe se cambia con 💲 ✏️ de la ficha o en la pestaña 💲 Precios. Para poner precios hace falta además el permiso de cambiar precios. Si ves el costo, también está «Costo en dólares» (solo lo importado) y, abajo, el precio sugerido según las reglas de precio: elegís a qué redondear para arriba y «usar» lo pone en la venta.',
-        '⛔ Dar de baja: el artículo queda discontinuado en los tres locales (no se borra nada); ↩ Reactivar lo vuelve a activar.',
-        '📷 Foto: en la ficha, abajo de la foto, «📷 Subir foto» (o «📷 Cambiar foto»). Elegís una foto de la compu, o con el celular la sacás en el momento. Se achica sola y la ven enseguida Stock y Productos; la anterior queda en 🕘 Cambios. La sube solo Oficina: desde los locales se pide con 📝 (tipo «Foto»). Hasta el 31-dic las fotos se siguen cargando como siempre (carpeta FOTOS_PRODUCTOS y el Dragonfish): acá solo se prueba con los códigos ZZPRUEBA.',
-        '💲 Precios → ✏️: la venta (una sola para los tres locales), y el costo, la compra y el costo en dólares si los ves. Si la venta cambia más de 50 %, pregunta antes de grabar. En la ficha se ve además el «Sugerido por regla», con la cuenta y la diferencia contra el precio de hoy; «usar el sugerido» lo pone en la venta.',
+        '⛔ Dar de baja (en el panel azul de la ficha): el artículo queda discontinuado en los tres locales (no se borra nada); ↩ Reactivar lo vuelve a activar.',
+        '📷 Foto: en el panel azul de la ficha, «📷 Subir foto» (o «📷 Cambiar foto»). Elegís una foto de la compu, o con el celular la sacás en el momento. Se achica sola y la ven enseguida Stock y Productos; la anterior queda en 🕘 Cambios. La sube solo Oficina: desde los locales se pide con 📝 (tipo «Foto»). Hasta el 31-dic las fotos se siguen cargando como siempre (carpeta FOTOS_PRODUCTOS y el Dragonfish): acá solo se prueba con los códigos ZZPRUEBA.',
+        '💲 Precio (en el panel azul) o el ✏️ de «💲 De la compra a la venta»: la venta (una sola para los tres locales), y el costo, la compra y el costo en dólares si los ves. Si la venta cambia más de 50 %, pregunta antes de grabar. En la ficha se ve además el sugerido por regla, con la cuenta y la diferencia contra el precio de hoy; «usar el sugerido» lo pone en la venta.',
         '🕘 Cambios (abajo de todo en la ficha): cada cambio con el antes, el después, quién y cuándo. El costo y la compra solo los ve quien tiene permiso de ver el costo.',
         'Hasta el 31-dic los artículos se siguen cargando en el Dragonfish: lo único que se graba directo son los códigos de prueba que empiezan con ZZPRUEBA (salen con la marca 🧪 prueba).',
       ],
