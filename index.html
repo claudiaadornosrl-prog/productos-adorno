@@ -691,7 +691,7 @@ tr.dim { color: var(--muted); }
 #pr-form select:disabled { opacity: .5; cursor: not-allowed; }
 .pr-red-fila { display: inline-flex; gap: 6px; align-items: center; }
 .pr-dir { width: 34px; height: 34px; border-radius: 999px; border: 1px solid var(--primary); background: var(--primary-bg); color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-.pr-dir .ico { width: 18px; height: 18px; transition: transform .15s; } .pr-dir.abajo .ico { transform: rotate(180deg); }
+.pr-dir .ico { width: 18px; height: 18px; } .pr-dir.abajo { background: #fff7ed; border-color: var(--amber); color: var(--amber); }
 .pr-tabla td.pr-rcel { min-width: 230px; } .pr-tabla td.pr-rcel .mini { margin-top: 2px; }
 .pr-rsel { font: inherit; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: #fffbeb; max-width: 220px; }
 .pr-tabla .pr-in.calc:not(.cambia) { color: var(--primary-dark); }
@@ -2159,6 +2159,10 @@ const prReglaEfectiva = f => { const k = prReglaDe(f); return k === 'auto' ? (f.
 const abajoA = (n, u) => n == null || isNaN(n) ? null : u > 1 ? Math.floor(n / u + 1e-9) * u : Math.round(n);
 const prRedondear = (n, u) => PR.redAbajo ? abajoA(n, u) : arribaA(n, u);
 const prDirTxt = () => PR.redAbajo ? 'para abajo' : 'para arriba';
+// la flechita se dibuja para arriba o para abajo (girarla con CSS no anda: /hub/animaciones.js le pone su transform al ícono)
+const prFlecha = abajo => abajo
+  ? '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="5 12 12 19 19 12"/></svg>'
+  : '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
 const prAjustar = (n, c) => c === 'venta' ? (PR.modo === 'pct' ? prRedondear(n, PR.redondeo || 1) : arribaA(n, 1)) : prRed(n, c);
 const prNuevaFila = (sku, extra) => Object.assign({ sku, desc: '', disc: false, dto: null, act: {}, nuevo: {}, pct: {}, mano: {}, sugDB: null, sug: null, error: null, off: false }, extra || {});
 // (27-nov, JP: «la regla de costo es siempre: Compra, a precio contado - descuentos») el descuento es el del proveedor en la
@@ -2223,7 +2227,7 @@ function pintarFormPrecios() {
     <div class="pr-form"><div class="pr-venta">
       <span class="pr-venta-tit">Precio de venta</span>
       ${reglas ? `<label><span data-ayuda="Cómo sale el precio de venta nuevo cuando «Venta» no está tildado: la regla de precio (por ejemplo costo × 3, con IVA incluido) calculada con el costo nuevo. «La de cada artículo» usa la que le corresponde a cada uno (proveedor, Nivel 3, 2, 1, general); «Sin regla» no toca la venta. Con «Venta» tildado, la venta cambia el % y esta lista queda apagada. En la columna «Regla» de la tabla se ve la de cada artículo y se cambia. Las reglas se arman en 📐 Reglas.">Regla</span><select id="pr-regla" onchange="prOpcion()">${reglas}</select></label>` : ''}
-      <label><span data-ayuda="Cómo se redondea el precio de venta nuevo: al múltiplo que elijas, para arriba (la flechita para arriba, de entrada) o para abajo (tocá la flechita). «El de la regla» = el redondeo que tiene cargado cada regla (sin regla, al peso).">Redondeo</span><span class="pr-red-fila"><select id="pr-red" onchange="prOpcion()">${REDONDEOS.map(u => `<option value="${u}"${(PR.redondeo || 0) === u ? ' selected' : ''}>${u ? 'a $ ' + u.toLocaleString('es-AR') : 'el de la regla / al peso'}</option>`).join('')}</select><button type="button" id="pr-dir" class="pr-dir${PR.redAbajo ? ' abajo' : ''}" onclick="prDireccion()" title="${PR.redAbajo ? 'Redondea para abajo: tocá para redondear para arriba' : 'Redondea para arriba: tocá para redondear para abajo'}" aria-label="Dirección del redondeo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button></span></label>
+      <label><span data-ayuda="Cómo se redondea el precio de venta nuevo: al múltiplo que elijas, para arriba (la flechita para arriba, de entrada) o para abajo (tocá la flechita). «El de la regla» = el redondeo que tiene cargado cada regla (sin regla, al peso).">Redondeo</span><span class="pr-red-fila"><select id="pr-red" onchange="prOpcion()">${REDONDEOS.map(u => `<option value="${u}"${(PR.redondeo || 0) === u ? ' selected' : ''}>${u ? 'a $ ' + u.toLocaleString('es-AR') : 'el de la regla / al peso'}</option>`).join('')}</select><button type="button" id="pr-dir" class="pr-dir${PR.redAbajo ? ' abajo' : ''}" onclick="prDireccion()" title="${PR.redAbajo ? 'Redondea para abajo: tocá para redondear para arriba' : 'Redondea para arriba: tocá para redondear para abajo'}" aria-label="Dirección del redondeo">${prFlecha(PR.redAbajo)}</button></span></label>
       <button class="pill-pri" onclick="armarPct()">Armar la tabla</button>
       <span class="mini" id="pr-ult"></span>
     </div></div>`;
@@ -2260,7 +2264,7 @@ async function prProvElegido() {
 function prDireccion() {
   PR.redAbajo = !PR.redAbajo;
   const b = document.getElementById('pr-dir');
-  if (b) { b.classList.toggle('abajo', PR.redAbajo); b.title = PR.redAbajo ? 'Redondea para abajo: tocá para redondear para arriba' : 'Redondea para arriba: tocá para redondear para abajo'; }
+  if (b) { b.classList.toggle('abajo', PR.redAbajo); b.innerHTML = prFlecha(PR.redAbajo); b.title = PR.redAbajo ? 'Redondea para abajo: tocá para redondear para arriba' : 'Redondea para arriba: tocá para redondear para abajo'; }
   prOpcion();
 }
 function campoPrecio(c) {   // se tildan y destildan libres (sin ninguna: la venta sale de la regla con el costo de hoy)
@@ -3023,7 +3027,7 @@ function pintarSugeridoAlta() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=38"></script>
+<script src="manual.js?v=39"></script>
 <script src="adorno-tablas.js?v=fc267a1d"></script>
 </body>
 </html>
