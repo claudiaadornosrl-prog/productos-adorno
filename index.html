@@ -688,7 +688,10 @@ tr.dim { color: var(--muted); }
 /* (27-nov tarde) el renglón «Precio de venta» (regla + redondeo), la regla de cada artículo y el costo calculado */
 .pr-venta { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; padding: 10px 14px; border-radius: 18px; background: #f0f9ff; border: 1px solid #bae6fd; }
 .pr-venta-tit { align-self: center; font-weight: 700; color: var(--primary-dark); font-size: 13px; margin-right: 2px; }
-#pr-form .fchip.apagado { opacity: .45; }
+#pr-form select:disabled { opacity: .5; cursor: not-allowed; }
+.pr-red-fila { display: inline-flex; gap: 6px; align-items: center; }
+.pr-dir { width: 34px; height: 34px; border-radius: 999px; border: 1px solid var(--primary); background: var(--primary-bg); color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.pr-dir .ico { width: 18px; height: 18px; transition: transform .15s; } .pr-dir.abajo .ico { transform: rotate(180deg); }
 .pr-tabla td.pr-rcel { min-width: 230px; } .pr-tabla td.pr-rcel .mini { margin-top: 2px; }
 .pr-rsel { font: inherit; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: #fffbeb; max-width: 220px; }
 .pr-tabla .pr-in.calc:not(.cambia) { color: var(--primary-dark); }
@@ -820,7 +823,7 @@ tr.dim { color: var(--muted); }
       <button id="tab-juegos" onclick="switchTab('juegos')" title="Juegos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lb">Juegos</span></button>
       <button id="tab-sincat" onclick="switchTab('sincat')" title="Sin categoría"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="lb">Sin categoría</span></button>
       <button id="tab-altas" onclick="switchTab('altas')" title="Altas para el Dragonfish"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="lb">Altas</span></button>
-      <button id="tab-precios" onclick="switchTab('precios')" title="Precios: aumentos por proveedor, pegar desde Excel, reglas y bitácora"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lb">Precios</span></button>
+      <button id="tab-precios" onclick="switchTab('precios')" title="Precios: modificaciones de precio por proveedor, pegar desde Excel, reglas y bitácora"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lb">Precios</span></button>
       <button id="tab-pedidos" onclick="switchTab('pedidos')" title="Pedidos de corrección de los locales"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg><span class="lb">Pedidos</span><span class="tab-badge" id="pc-badge" style="display:none"></span></button>
     </nav>
     <div class="header-right ab-der">
@@ -898,7 +901,7 @@ tr.dim { color: var(--muted); }
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <h3 style="margin:0;flex:1"><span id="pr-titulo" data-ayuda="Precios en bloque">💲 Precios en bloque</span></h3>
           <span class="pc-filtro" id="pr-modo">
-            <button class="fchip on" data-m="pct" onclick="modoPrecios('pct')">% Aumento</button>
+            <button class="fchip on" data-m="pct" onclick="modoPrecios('pct')">% Modificación</button>
             <button class="fchip" data-m="pegar" onclick="modoPrecios('pegar')">📋 Pegar desde Excel</button>
             <button class="fchip" data-m="reglas" onclick="modoPrecios('reglas')">📐 Reglas</button>
             <button class="fchip" data-m="bitacora" onclick="modoPrecios('bitacora')">🕘 Bitácora</button>
@@ -2146,10 +2149,17 @@ const prRaro = (f, c) => prValido(f.nuevo[c]) && f.act[c] > 0 && Math.abs(f.nuev
 // la columna «Regla» está en «% Aumento» si hay reglas cargadas
 const prConRegla = () => PR.modo === 'pct' && !!RG.datos;
 // la regla de un artículo: la que se eligió en su fila, o la de arriba ('' sin regla · 'auto' la suya · 'r:<id>')
-const prReglaDe = f => PR.modo !== 'pct' ? '' : f.regla !== undefined ? f.regla : PR.regla;
+// (27-nov, JP: «puede que no haya aumento de precio de una lista de costo y compra y solo querramos aumentar venta») con
+// «Venta» tildado la venta cambia el mismo % y la regla de arriba no se usa (salvo la que se elija en un artículo)
+const prReglaDe = f => PR.modo !== 'pct' ? '' : f.regla !== undefined ? f.regla : PR.campos.includes('venta') ? '' : PR.regla;
 const prReglaEfectiva = f => { const k = prReglaDe(f); return k === 'auto' ? (f.sugDB?.regla_id ? 'r:' + f.sugDB.regla_id : '') : k; };
 // la venta con el redondeo de arriba («para arriba a…»); costo y compra al centavo
-const prAjustar = (n, c) => c === 'venta' ? arribaA(n, PR.modo === 'pct' ? (PR.redondeo || 1) : 1) : prRed(n, c);
+// (27-nov, JP: «pueden ser redondeos para arriba o para abajo … un botón con una flechita para arriba (por default) y que si
+// la toco se pone para abajo») PR.redAbajo; en la bitácora el redondeo para abajo se guarda en negativo (-1 = el de la regla)
+const abajoA = (n, u) => n == null || isNaN(n) ? null : u > 1 ? Math.floor(n / u + 1e-9) * u : Math.round(n);
+const prRedondear = (n, u) => PR.redAbajo ? abajoA(n, u) : arribaA(n, u);
+const prDirTxt = () => PR.redAbajo ? 'para abajo' : 'para arriba';
+const prAjustar = (n, c) => c === 'venta' ? (PR.modo === 'pct' ? prRedondear(n, PR.redondeo || 1) : arribaA(n, 1)) : prRed(n, c);
 const prNuevaFila = (sku, extra) => Object.assign({ sku, desc: '', disc: false, dto: null, act: {}, nuevo: {}, pct: {}, mano: {}, sugDB: null, sug: null, error: null, off: false }, extra || {});
 // (27-nov, JP: «la regla de costo es siempre: Compra, a precio contado - descuentos») el descuento es el del proveedor en la
 // ficha; si no está cargado, el que da la compra y el costo de hoy
@@ -2164,12 +2174,13 @@ const prCostoCalculado = f => PR.camposTabla.includes('costo') && (PR.modo === '
 async function abrirPrecios() {
   if (!(await cargarVocab())) return;
   const tit = document.getElementById('pr-titulo');
-  if (tit) tit.dataset.ayuda = 'Elegí el proveedor y el % de aumento: el % va a la compra (precio contado) y el costo se recalcula solo, compra menos el '
-    + 'descuento del proveedor. El precio de venta sale de la regla de cada artículo (por ejemplo costo × 3, con IVA incluido) con el redondeo que elijas. '
+  if (tit) tit.dataset.ayuda = 'Elegí el proveedor, el % de la modificación (positivo sube, negativo baja) y a qué listas se aplica. A la compra (precio '
+    + 'contado): el costo se recalcula solo, compra menos el descuento del proveedor. A la venta: cambia el mismo %; si no, el precio de venta sale de la '
+    + 'regla de cada artículo (por ejemplo costo × 3, con IVA incluido) con el redondeo que elijas. '
     + 'Se arma la tabla con los precios nuevos, que se corrigen a mano (el precio, el % o la regla de cada artículo), y se destilda lo que no va. O pegá de '
     + 'Excel los códigos con sus precios. Antes de grabar se ve cómo queda. Costo y compra se graban en el momento; la venta puede empezar a regir más '
     + 'adelante, y a las empleadas de los locales les llega un aviso. El precio de venta es uno solo para los tres locales y el POS lo toma solo. Cada '
-    + 'aumento queda en 🕘 Bitácora.'
+    + 'modificación queda en 🕘 Bitácora.'
     + (PROD.maestro === 'productos' ? '' : '\n\nHasta el 1-ene los precios se cambian en el Dragonfish: acá se arma la tabla y se baja a Excel con 📥 (queda anotado en la bitácora); solo se graban los códigos de prueba (ZZPRUEBA…).');
   if (!RG.datos && (prVeCosto() || veo('productos.precio'))) await cargarReglas();
   if (!document.getElementById('pr-prov') && !document.getElementById('pr-texto')) pintarFormPrecios();
@@ -2186,32 +2197,33 @@ function modoPrecios(m) {
 function prOpcionesRegla() {
   const reglas = (RG.datos?.reglas || []).filter(r => r.activa);
   if (!RG.datos || !prVeCosto()) return '';
-  return `<option value="auto"${PR.regla === 'auto' ? ' selected' : ''}>La de cada artículo</option><option value=""${PR.regla === '' ? ' selected' : ''}>Sin regla (la venta sube el %)</option>`
+  return `<option value="auto"${PR.regla === 'auto' ? ' selected' : ''}>La de cada artículo</option><option value=""${PR.regla === '' ? ' selected' : ''}>Sin regla (la venta no se toca)</option>`
     + reglas.map(r => `<option value="r:${r.id}"${PR.regla === 'r:' + r.id ? ' selected' : ''}>${esc(r.nombre)}</option>`).join('');
 }
 const PR_CHIP = { compra: 'Compra → costo', venta: 'Venta' };
-function prChipVenta() {   // con una regla, la venta sale de la regla: el chip «Venta» no se usa
-  const b = document.querySelector('#pr-form .fchip[data-c="venta"]'); if (!b) return;
-  b.classList.toggle('apagado', !!PR.regla);
-  b.title = PR.regla ? 'La venta sale de la regla. Para subir la venta un %, elegí «Sin regla» abajo.' : 'Subir la venta el mismo %';
+function prChipVenta() {   // con «Venta» tildado la regla de arriba no se usa: la lista de reglas queda apagada
+  const sel = document.getElementById('pr-regla'); if (!sel) return;
+  const v = PR.campos.includes('venta');
+  sel.disabled = v;
+  sel.title = v ? 'Con «Venta» tildado, la venta cambia el mismo %: la regla no se usa (salvo la que elijas en un artículo, en la columna «Regla»). Destildá «Venta» para que la venta salga de la regla.' : '';
 }
 function pintarFormPrecios() {
   const el = document.getElementById('pr-form'), v = ALTA.vocab; if (!el || !v) return;
   if (PR.modo === 'pct') {
     const campos = prVeCosto() ? ['compra', 'venta'] : ['venta'];
-    PR.campos = PR.campos.filter(c => campos.includes(c)); if (!PR.campos.length) PR.campos = [campos[0]];
+    PR.campos = PR.campos.filter(c => campos.includes(c));
     const reglas = prOpcionesRegla();
     if (!reglas) PR.regla = '';
     el.innerHTML = `<div class="pr-form">
       <label><span data-ayuda="Se arma la tabla con los artículos de ese proveedor (sin los discontinuados, salvo que tildes «con discontinuados»).">Proveedor</span><select id="pr-prov" onchange="prProvElegido()"><option value="">— elegí —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}"${PR.prov?.codigo === p.codigo ? ' selected' : ''}>${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select></label>
-      <label><span data-ayuda="El aumento del proveedor (por ejemplo 8, o -5 para bajar). Va a la compra (precio contado) y el costo se recalcula solo. Después se puede cambiar el % de cada artículo en la tabla.">Aumento %</span><input id="pr-pct" inputmode="decimal" placeholder="8 · o -5" value="${PR.pct == null ? '' : esc(String(PR.pct).replace('.', ','))}" style="min-width:90px;width:100px" onchange="prOpcion()" onkeydown="if(event.key==='Enter') armarPct()"></label>
-      <div class="pr-campos"><span class="mini" data-ayuda="«Compra → costo»: el % va a la lista de compra (precio contado) y el costo se calcula: compra menos el descuento del proveedor. «Venta»: la venta sube el mismo % (solo si abajo elegís «Sin regla»; con una regla, la venta sale de la regla).">Aplicar el % a:</span> ${campos.map(c => `<button type="button" class="fchip${PR.campos.includes(c) ? ' on' : ''}" data-c="${c}" onclick="campoPrecio('${c}')">${PR_CHIP[c]}</button>`).join(' ')}</div>
+      <label><span data-ayuda="Cuánto cambian los precios: 8 = suben 8 %, -5 = bajan 5 %. Se aplica a las listas que tildes al lado. Después se puede cambiar el % de cada artículo en la tabla.">Modificación %</span><input id="pr-pct" inputmode="decimal" placeholder="8 · o -5" value="${PR.pct == null ? '' : esc(String(PR.pct).replace('.', ','))}" style="min-width:90px;width:100px" onchange="prOpcion()" onkeydown="if(event.key==='Enter') armarPct()"></label>
+      <div class="pr-campos"><span class="mini" data-ayuda="Tildá las listas que cambian. «Compra → costo»: el % va a la lista de compra (precio contado) y el costo se calcula: compra menos el descuento del proveedor. «Venta»: la venta cambia el mismo % (la regla no se usa). Si no tildás «Venta», la venta sale de la regla de abajo (con el costo nuevo), o no se toca si elegís «Sin regla». Se puede tildar solo «Venta» (cambia solo el precio de venta) o solo «Compra → costo».">Aplicar el % a:</span> ${campos.map(c => `<button type="button" class="fchip${PR.campos.includes(c) ? ' on' : ''}" data-c="${c}" onclick="campoPrecio('${c}')">${PR_CHIP[c]}</button>`).join(' ')}</div>
       <label class="pr-chk"><input type="checkbox" id="pr-disc"${PR.disc ? ' checked' : ''}> con discontinuados</label>
     </div>
     <div class="pr-form"><div class="pr-venta">
       <span class="pr-venta-tit">Precio de venta</span>
-      ${reglas ? `<label><span data-ayuda="Cómo sale el precio de venta nuevo: la regla de precio (por ejemplo costo × 3, con IVA incluido) calculada con el costo nuevo. «La de cada artículo» usa la que le corresponde a cada uno (proveedor, Nivel 3, 2, 1, general). En la columna «Regla» de la tabla se ve la de cada artículo y se cambia. Las reglas se arman en 📐 Reglas.">Regla</span><select id="pr-regla" onchange="prOpcion()">${reglas}</select></label>` : ''}
-      <label><span data-ayuda="Cómo se redondea el precio de venta nuevo: para arriba al múltiplo que elijas. «El de la regla» = el redondeo que tiene cargado cada regla (sin regla, al peso).">Redondeo</span><select id="pr-red" onchange="prOpcion()">${REDONDEOS.map(u => `<option value="${u}"${(PR.redondeo || 0) === u ? ' selected' : ''}>${u ? 'para arriba a $ ' + u.toLocaleString('es-AR') : 'el de la regla / al peso'}</option>`).join('')}</select></label>
+      ${reglas ? `<label><span data-ayuda="Cómo sale el precio de venta nuevo cuando «Venta» no está tildado: la regla de precio (por ejemplo costo × 3, con IVA incluido) calculada con el costo nuevo. «La de cada artículo» usa la que le corresponde a cada uno (proveedor, Nivel 3, 2, 1, general); «Sin regla» no toca la venta. Con «Venta» tildado, la venta cambia el % y esta lista queda apagada. En la columna «Regla» de la tabla se ve la de cada artículo y se cambia. Las reglas se arman en 📐 Reglas.">Regla</span><select id="pr-regla" onchange="prOpcion()">${reglas}</select></label>` : ''}
+      <label><span data-ayuda="Cómo se redondea el precio de venta nuevo: al múltiplo que elijas, para arriba (la flechita para arriba, de entrada) o para abajo (tocá la flechita). «El de la regla» = el redondeo que tiene cargado cada regla (sin regla, al peso).">Redondeo</span><span class="pr-red-fila"><select id="pr-red" onchange="prOpcion()">${REDONDEOS.map(u => `<option value="${u}"${(PR.redondeo || 0) === u ? ' selected' : ''}>${u ? 'a $ ' + u.toLocaleString('es-AR') : 'el de la regla / al peso'}</option>`).join('')}</select><button type="button" id="pr-dir" class="pr-dir${PR.redAbajo ? ' abajo' : ''}" onclick="prDireccion()" title="${PR.redAbajo ? 'Redondea para abajo: tocá para redondear para arriba' : 'Redondea para arriba: tocá para redondear para abajo'}" aria-label="Dirección del redondeo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button></span></label>
       <button class="pill-pri" onclick="armarPct()">Armar la tabla</button>
       <span class="mini" id="pr-ult"></span>
     </div></div>`;
@@ -2237,14 +2249,23 @@ async function prProvElegido() {
   const sel = document.getElementById('pr-regla'), red = document.getElementById('pr-red');
   const clave = !data ? 'auto' : data.regla_clave === 'sin' ? '' : data.regla_clave;
   sel.value = [...sel.options].some(o => o.value === clave) ? clave : 'auto';
-  if (data && red && [...red.options].some(o => Number(o.value) === Number(data.redondeo || 0))) red.value = String(data.redondeo || 0);
+  if (data) {   // redondeo negativo = para abajo (-1 = el de la regla, para abajo)
+    const rv = Math.abs(Number(data.redondeo || 0)), u = rv === 1 ? 0 : rv;
+    if (red && [...red.options].some(o => Number(o.value) === u)) red.value = String(u);
+    if (!!PR.redAbajo !== Number(data.redondeo) < 0) prDireccion();
+  }
   prLeerOpciones(); prChipVenta();
-  if (nota && data) nota.textContent = `Regla y redondeo del último aumento de este proveedor (${fechaCorta(data.creado_at)})`;
+  if (nota && data) nota.textContent = `Regla y redondeo de la última modificación de este proveedor (${fechaCorta(data.creado_at)})`;
 }
-function campoPrecio(c) {
-  if (c === 'venta' && PR.regla && !PR.campos.includes('venta')) return toast('La venta sale de la regla. Para subir la venta un %, elegí «Sin regla» en «Precio de venta».');
+function prDireccion() {
+  PR.redAbajo = !PR.redAbajo;
+  const b = document.getElementById('pr-dir');
+  if (b) { b.classList.toggle('abajo', PR.redAbajo); b.title = PR.redAbajo ? 'Redondea para abajo: tocá para redondear para arriba' : 'Redondea para arriba: tocá para redondear para abajo'; }
+  prOpcion();
+}
+function campoPrecio(c) {   // se tildan y destildan libres (sin ninguna: la venta sale de la regla con el costo de hoy)
   const i = PR.campos.indexOf(c);
-  if (i >= 0) { if (PR.campos.length > 1) PR.campos.splice(i, 1); } else PR.campos.push(c);
+  if (i >= 0) PR.campos.splice(i, 1); else PR.campos.push(c);
   PR.campos.sort((a, b) => PR_ORDEN.indexOf(a) - PR_ORDEN.indexOf(b));
   document.querySelectorAll('#pr-form .pr-campos .fchip').forEach(b => b.classList.toggle('on', PR.campos.includes(b.dataset.c)));
   prOpcion();
@@ -2266,7 +2287,7 @@ function prOpcion() {
 function prCamposActivos() {
   const s = new Set();
   if (PR.campos.includes('compra')) { s.add('compra'); s.add('costo'); }
-  if ((PR.campos.includes('venta') && !PR.regla) || PR.regla || PR.filas.some(f => f.regla)) s.add('venta');
+  if (PR.campos.includes('venta') || PR.regla || PR.filas.some(f => f.regla)) s.add('venta');
   return PR_ORDEN.filter(c => s.has(c));
 }
 
@@ -2293,8 +2314,8 @@ async function armarPct() {
   prLeerOpciones();
   if (!prov) return toast('Elegí el proveedor.', 'error');
   if (Number.isNaN(PR.pct)) return toast('Ese % no se entiende (por ejemplo 8, o -5 para bajar).', 'error');
-  if (PR.pct == null && !PR.regla) return toast('Poné el % (por ejemplo 8, o -5 para bajar) o elegí una regla para el precio de venta.', 'error');
-  if (!PR.regla && !PR.campos.length) return toast('Elegí a qué se aplica el %: la compra (y el costo) o la venta.', 'error');
+  if (!PR.campos.length && !PR.regla) return toast('Tildá a qué listas se aplica el % (compra o venta) o elegí una regla para el precio de venta.', 'error');
+  if (PR.campos.length && PR.pct == null) return toast('Poné el % de la modificación (por ejemplo 8 para subir, o -5 para bajar).', 'error');
   if (PR.pct != null && (PR.pct <= -90 || PR.pct > 300)) return toast('Ese % no parece correcto.', 'error');
   const el = document.getElementById('pr-tabla'); el.innerHTML = '<div class="empty">Armando la tabla…</div>';
   try {
@@ -2378,14 +2399,14 @@ function prSugerir(f, clave) {
   }
   bruto = Math.round(bruto * 100) / 100;
   const u = PR.redondeo || Number(r.redondeo) || 1;
-  return Object.assign(s, { valor_base: base, mult, dolar, bruto, redondeo: u, sugerido: arribaA(bruto, u) });
+  return Object.assign(s, { valor_base: base, mult, dolar, bruto, redondeo: u, abajo: !!PR.redAbajo, sugerido: prRedondear(bruto, u) });
 }
 function prCuentaTexto(sg) {
   if (!sg) return '';
   if (!sg.sugerido) return `${sg.regla ? sg.regla + ': ' : ''}${sg.motivo || 'sin sugerido'}`;
   const m = '× ' + Number(sg.mult).toLocaleString('es-AR', { maximumFractionDigits: 4 });
   const cuenta = sg.base === 'costo_usd' ? `${usd(sg.valor_base)} ${m} × ${plata2(sg.dolar?.venta)}` : `costo ${plata2(sg.valor_base)} ${m}`;
-  return `${sg.regla}: ${cuenta} = ${plata2(sg.bruto)} → para arriba a ${redTxt(sg.redondeo)}: ${plata(sg.sugerido)}`;
+  return `${sg.regla}: ${cuenta} = ${plata2(sg.bruto)} → ${sg.abajo ? 'para abajo' : 'para arriba'} a ${redTxt(sg.redondeo)}: ${plata(sg.sugerido)}`;
 }
 // (27-nov, JP: «una columna oculta en donde, si la muestro, se vea la regla aplicada a cada artículo e incluso se pueda
 // cambiar desde ahí») la regla de cada artículo en una lista para cambiarla, «cambiada» si no es la de arriba, y la cuenta
@@ -2400,8 +2421,8 @@ function prReglaCelda(f, i) {
   const opts = `<option value=""${ef === '' ? ' selected' : ''}>Sin regla</option>` + (RG.datos?.reglas || []).filter(r => r.activa || 'r:' + r.id === ef)
     .map(r => `<option value="r:${r.id}"${'r:' + r.id === ef ? ' selected' : ''}>${esc(r.nombre)}${'r:' + r.id === propia ? ' (la suya)' : ''}</option>`).join('');
   const sg = f.sug;
-  const cuenta = f.mano.venta ? 'la venta está cambiada a mano' : sg ? (sg.sugerido ? `${cuentaSugerido(sg)} → ${esc(redTxt(sg.redondeo))}` : `<span class="chip amber">${esc(sg.motivo || 'sin sugerido')}</span>`)
-    : PR.campos.includes('venta') ? 'la venta sube el %' : 'la venta no se toca';
+  const cuenta = f.mano.venta ? 'la venta está cambiada a mano' : sg ? (sg.sugerido ? `${cuentaSugerido(sg)} → ${sg.abajo ? '↓' : '↑'} ${esc(redTxt(sg.redondeo))}` : `<span class="chip amber">${esc(sg.motivo || 'sin sugerido')}</span>`)
+    : PR.campos.includes('venta') ? 'la venta cambia el %' : 'la venta no se toca';
   return `<select class="pr-rsel" data-i="${i}" onchange="prReglaFilaCambiar(this)" title="La regla de este artículo: cambiala y se recalcula su venta" ${f.aplicado ? 'disabled' : ''}>${opts}</select>${cambiada ? ' <span class="chip" style="background:var(--primary-bg);color:var(--primary)" title="No es la regla de arriba">cambiada</span>' : ''}<div class="mini">${cuenta}</div>`;
 }
 function prReglaFilaCambiar(sel) {
@@ -2471,7 +2492,7 @@ function prPctTxt(f, c) {
 function prPctTit(f, c) {
   if (!prValido(f.nuevo[c]) || !(f.act[c] > 0)) return f.act[c] > 0 ? 'Poné un % para darle precio nuevo a este artículo' : 'Sin precio de hoy: no se puede sacar un %';
   const ef = (f.nuevo[c] / f.act[c] - 1) * 100;
-  const t = 'Cambiá el % para darle otro aumento a este artículo';
+  const t = 'Cambiá el % para darle otra modificación a este artículo';
   return f.pct[c] != null && Math.abs(ef - f.pct[c]) >= 0.05 ? `Se aplicó ${prPctFmt(f.pct[c], 2)}; con el redondeo queda en ${prPctFmt(ef, 2)}. ${t}.` : t + '.';
 }
 function prTitNuevo(f, c) {
@@ -2615,11 +2636,11 @@ function prParaGrabar() {
 }
 // lo que eligió arriba, para la bitácora
 function prCabecera() {
-  let reglaTxt = !prConRegla() || !PR.camposTabla.includes('venta') ? null : PR.regla === 'auto' ? 'la de cada artículo' : PR.regla ? ((RG.datos?.reglas || []).find(r => 'r:' + r.id === PR.regla)?.nombre || null) : null;
+  let reglaTxt = !prConRegla() || !PR.camposTabla.includes('venta') || PR.campos.includes('venta') ? null : PR.regla === 'auto' ? 'la de cada artículo' : PR.regla ? ((RG.datos?.reglas || []).find(r => 'r:' + r.id === PR.regla)?.nombre || null) : null;
   const cambiadas = PR.modo === 'pct' ? PR.filas.filter(f => f.regla !== undefined && prParaAplicar(f)).length : 0;
   if (cambiadas) reglaTxt = (reglaTxt || 'sin regla') + ` (${cambiadas} con otra regla)`;
   return { modo: PR.modo === 'pegar' ? 'pegar' : 'pct', proveedor_codigo: PR.prov?.codigo || null, proveedor_nombre: PR.prov?.nombre || null,
-           pct: PR.modo === 'pct' ? PR.pct : null, redondeo: PR.modo === 'pct' && PR.redondeo ? PR.redondeo : null, regla: reglaTxt, campos: PR.camposTabla,
+           pct: PR.modo === 'pct' ? PR.pct : null, redondeo: PR.modo !== 'pct' ? null : PR.redAbajo ? -(PR.redondeo || 1) : PR.redondeo || null, regla: reglaTxt, campos: PR.camposTabla,
            regla_clave: PR.modo === 'pct' && document.getElementById('pr-regla') ? (PR.regla || 'sin') : null };
 }
 const prAhoraLocal = () => { const d = new Date(Date.now() - 3 * 3600e3); return d.toISOString().slice(0, 16); };   // Argentina (UTC−3)
@@ -2652,7 +2673,7 @@ async function aplicarPrecios() {
   const txtVenta = !conVenta ? '' : rige ? `\n\nLa venta empieza a regir el ${cuando}${soloVenta ? '' : '; costo y compra se graban ya'}. A las empleadas de los locales les llega un aviso ahora y otro a esa hora.`
     : '\n\nLa venta cambia ya en los tres locales (el POS la toma solo en unos minutos) y a las empleadas de los locales les llega un aviso.';
   if (!confirm(`Se graban los precios nuevos de ${items.length} artículo${items.length === 1 ? '' : 's'}.${txtVenta}${raros ? `\n\n⚠ ${raros} cambian más de 50 %: revisalos antes de seguir.` : ''}\n\n¿Seguimos?`)) return;
-  const reg = await registrarQuien('productos.precio', { accion: 'aumento de precios', modo: PR.modo, proveedor: PR.prov?.codigo || null, articulos: items.length, rige_desde: rige, skus: items.slice(0, 30).map(x => x.sku) });
+  const reg = await registrarQuien('productos.precio', { accion: 'modificación de precios', modo: PR.modo, proveedor: PR.prov?.codigo || null, articulos: items.length, rige_desde: rige, skus: items.slice(0, 30).map(x => x.sku) });
   if (!reg) return;
   const { data, error } = await reg.db.rpc('productos_aumento_grabar', { p: Object.assign(prCabecera(), { rige_desde: rige, items }), p_registro: reg.id || null });
   if (error) return avisoError(error);
@@ -2702,7 +2723,7 @@ function bitQue(a) {
   if (a.modo === 'pegar') p.push('Pegado de Excel' + (campos ? ` (${campos})` : ''));
   else if (a.pct != null) p.push(`${a.pct > 0 ? '+' : ''}${Number(a.pct).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %${campos ? ' a ' + campos : ''}`);
   if (a.regla) p.push('venta por regla: ' + a.regla);
-  if (a.redondeo) p.push('para arriba a $ ' + Number(a.redondeo).toLocaleString('es-AR'));
+  if (a.redondeo) { const r = Number(a.redondeo), u = Math.abs(r); p.push((r < 0 ? 'para abajo' : 'para arriba') + (u > 1 ? ' a $ ' + u.toLocaleString('es-AR') : ' (el de la regla)')); }
   return esc(p.join(' · ') || '—');
 }
 async function pintarBitacora() {
@@ -2712,7 +2733,7 @@ async function pintarBitacora() {
   if (PR.modo !== 'bitacora') return;
   if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
   BIT.lista = data || [];
-  if (!BIT.lista.length) { el.innerHTML = '<div class="empty">Todavía no hay aumentos anotados. Cada aumento que se graba (o se baja a Excel para el Dragonfish) queda acá.</div>'; return; }
+  if (!BIT.lista.length) { el.innerHTML = '<div class="empty">Todavía no hay modificaciones de precio anotadas. Cada una que se graba (o se baja a Excel para el Dragonfish) queda acá.</div>'; return; }
   const ed = veo('productos.precio');
   el.innerHTML = `<div style="overflow-x:auto"><table class="compacta bit-tabla" data-tt-clave="productos-bitacora"><thead><tr>
       <th>Cargado</th><th>Quién</th><th>Proveedor</th><th>Qué</th><th class="num">Artículos</th><th>La venta rige</th><th>Estado</th><th></th></tr></thead>
@@ -2745,7 +2766,7 @@ async function bitDetalle(id) {
 async function bitCancelar(id) {
   const a = BIT.lista.find(x => x.id === id); if (!a) return;
   if (!confirm(`Se cancela el cambio de la venta de ${a.articulos} artículo${a.articulos === 1 ? '' : 's'}${a.proveedor_nombre ? ' de ' + a.proveedor_nombre : ''} que iba a regir el ${fechaHora(a.rige_desde)}.\n\nCosto y compra ya quedaron grabados (eso no se vuelve atrás). A las empleadas de los locales les llega un aviso.\n\n¿Seguimos?`)) return;
-  const reg = await registrarQuien('productos.precio', { accion: 'cancelar aumento', aumento: id });
+  const reg = await registrarQuien('productos.precio', { accion: 'cancelar modificación de precios', aumento: id });
   if (!reg) return;
   const { error } = await reg.db.rpc('productos_aumento_cancelar', { p_id: id, p_registro: reg.id || null });
   if (error) return avisoError(error);
@@ -3002,7 +3023,7 @@ function pintarSugeridoAlta() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=37"></script>
+<script src="manual.js?v=38"></script>
 <script src="adorno-tablas.js?v=fc267a1d"></script>
 </body>
 </html>
