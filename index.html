@@ -675,6 +675,20 @@ tr.dim { color: var(--muted); }
 .pr-tabla .pr-in.mal { border-color: var(--red); background: var(--red-bg); }
 .pr-raro { color: var(--red); font-weight: 700; }
 .pr-pie { position: sticky; top: 0; z-index: 3; margin-bottom: 8px; }
+/* (27-nov) aumentos: casilla por artículo, % editable, la venta por regla, fecha desde la que rige, bitácora y globitos de ayuda */
+.pr-tabla th.pr-tilde, .pr-tabla td.pr-tilde { width: 28px; text-align: center; padding-left: 6px; padding-right: 2px; }
+.pr-tabla tr.pr-off td:not(.pr-tilde) { opacity: .45; }
+.pr-tabla tr.pr-off .pr-in { text-decoration: line-through; }
+.pr-tabla .pr-in.pr-pct { width: 74px; padding: 4px 8px; color: var(--muted); }
+.pr-tabla .pr-in.pr-pct:focus { color: var(--text); }
+.pr-tabla .pr-in.pr-pct.raro { color: var(--red); font-weight: 700; }
+.pr-tabla .pr-in.regla { background-image: linear-gradient(90deg, rgba(14,116,144,.10), rgba(14,116,144,0) 40%); }
+.pr-rige { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.pr-rige input { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: white; color: var(--text); }
+.bit-tabla td { vertical-align: top; } .bit-tabla tr.bit-det > td { background: #f8fafc; padding: 10px 12px 14px; border-radius: 0 0 14px 14px; }
+[data-ayuda] { cursor: help; text-decoration: underline dotted rgba(100,116,139,.55); text-underline-offset: 4px; }
+.ayuda-pop { position: fixed; z-index: 2000; max-width: min(440px, calc(100vw - 16px)); background: #0f172a; color: #fff; font-size: 12.5px; line-height: 1.45; font-weight: 400;
+  padding: 10px 14px; border-radius: 14px; box-shadow: 0 8px 28px rgba(15,23,42,.28); pointer-events: none; white-space: pre-line; text-transform: none; letter-spacing: 0; }
 .empty { padding: 50px 20px; text-align: center; color: var(--muted); background: white; border-radius: 10px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 1000; }
 .toast.error { background: var(--red); } .toast.success { background: var(--green); }
@@ -799,7 +813,7 @@ tr.dim { color: var(--muted); }
       <button id="tab-juegos" onclick="switchTab('juegos')" title="Juegos"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lb">Juegos</span></button>
       <button id="tab-sincat" onclick="switchTab('sincat')" title="Sin categoría"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="lb">Sin categoría</span></button>
       <button id="tab-altas" onclick="switchTab('altas')" title="Altas para el Dragonfish"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="lb">Altas</span></button>
-      <button id="tab-precios" onclick="switchTab('precios')" title="Precios en bloque: aumento % o pegar desde Excel"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lb">Precios</span></button>
+      <button id="tab-precios" onclick="switchTab('precios')" title="Precios: aumentos por proveedor, pegar desde Excel, reglas y bitácora"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lb">Precios</span></button>
       <button id="tab-pedidos" onclick="switchTab('pedidos')" title="Pedidos de corrección de los locales"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg><span class="lb">Pedidos</span><span class="tab-badge" id="pc-badge" style="display:none"></span></button>
     </nav>
     <div class="header-right ab-der">
@@ -875,17 +889,14 @@ tr.dim { color: var(--muted); }
     <section id="content-precios" class="tab-content">
       <div class="card">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <h3 style="margin:0;flex:1">💲 Precios en bloque</h3>
+          <h3 style="margin:0;flex:1"><span id="pr-titulo" data-ayuda="Precios en bloque">💲 Precios en bloque</span></h3>
           <span class="pc-filtro" id="pr-modo">
             <button class="fchip on" data-m="pct" onclick="modoPrecios('pct')">% Aumento</button>
             <button class="fchip" data-m="pegar" onclick="modoPrecios('pegar')">📋 Pegar desde Excel</button>
-            <button class="fchip" data-m="regla" onclick="modoPrecios('regla')">📐 Por regla</button>
+            <button class="fchip" data-m="reglas" onclick="modoPrecios('reglas')">📐 Reglas</button>
+            <button class="fchip" data-m="bitacora" onclick="modoPrecios('bitacora')">🕘 Bitácora</button>
           </span>
         </div>
-        <p class="mini" style="margin:8px 0 0">Elegí un proveedor o una categoría y el %: se arma la tabla con el precio nuevo de cada artículo, que se
-          corrige a mano (por ejemplo, para redondear). O pegá de Excel los códigos con sus precios. O usá 📐 Por regla: el precio
-          sugerido de cada artículo según las reglas de precio (costo × 3, importados por tramos…). Antes de grabar se ve cómo
-          queda. El precio de venta es uno solo para los tres locales y el POS lo toma solo en unos minutos.<span id="pr-corte"></span></p>
         <div id="pr-form"></div>
       </div>
       <div id="pr-reglas"></div>
@@ -2088,12 +2099,17 @@ async function resolverPedido(id, estado, donde) {
 // ═══ 💲 PRECIOS (25-nov-2026, paso 3 del maestro) ════════════════════════════════════════════════════════════════════
 // JP: «exacto un solo precio para todas las sucursales, los únicos que tocan precios son los de oficina» · «por el momento,
 // excel, también podemos armar una tabla dentro del módulo, que le ajuste por % y después que redondeen a mano».
-// «% Aumento» arma la tabla de un proveedor o una categoría con el % aplicado (al peso, sin redondeo automático) y cada precio
-// nuevo se corrige a mano; «Pegar desde Excel» toma CODIGO + precios. Se ve antes de grabar; graba productos_precios_aplicar
-// (origen 'bloque', con quién en productos_cambios). Hasta el 1-ene solo se graban los ZZPRUEBA…: el resto queda marcado
-// 🔒 y la tabla se baja a Excel (📥) para cargarlo en el Dragonfish.
-const PR = { modo: 'pct', campos: ['venta'], camposTabla: ['venta'], filas: [] };
+// (27-nov-2026, JP) Rehecha: arriba el proveedor, el %, el redondeo y la regla para la venta (sin los filtros de Nivel 1/2,
+// «es raro que se usen»); la tabla sin la columna del proveedor, títulos cortos (V. / Cto. / Cpra.), una casilla por
+// artículo (destildado = no se le aplica), el % de cada artículo se puede cambiar, y la cuenta de la regla en el globito del
+// precio nuevo y en una columna «Regla» que empieza oculta. Costo y compra se graban ya; la venta puede regir desde un día
+// y hora (productos_aumento_grabar + la tarea de cada minuto productos_aumentos_rigen), con aviso a las empleadas de los
+// locales al cargarlo y cuando empieza. Cada aumento queda en 🕘 Bitácora (también lo bajado a Excel para el Dragonfish).
+// Hasta el 1-ene solo se graban los ZZPRUEBA…: el resto queda marcado 🔒 y la tabla se baja a Excel (📥).
+const PR = { modo: 'pct', campos: ['venta'], camposTabla: ['venta'], filas: [], pct: null, redondeo: 0, regla: '', rige: '', prov: null };
 const PR_TXT = { venta: 'Venta', costo: 'Costo', compra: 'Compra', costo_usd: 'Costo USD' };
+const PR_CORTO = { venta: 'V.', costo: 'Cto.', compra: 'Cpra.', costo_usd: 'USD' };
+const PR_ORDEN = ['venta', 'costo', 'compra', 'costo_usd'];
 const usd = n => (n == null || isNaN(n)) ? '—' : 'US$ ' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const prVeCosto = () => veo('productos.ver_costo');
 function numAR(v) {   // «$ 12.500», «12500», «1.234,50», «12500.5» → número; vacío → null; basura → NaN
@@ -2111,11 +2127,20 @@ const prMuestra = (n, c) => c === 'venta' ? plata(n) : c === 'costo_usd' ? usd(n
 const prEnInput = (n, c) => prValido(n) ? Number(n).toLocaleString('es-AR', { maximumFractionDigits: c === 'venta' ? 0 : 2 }) : '';
 const prCambios = f => PR.camposTabla.filter(c => prValido(f.nuevo[c]) && !prIgual(f.nuevo[c], f.act[c]));
 const prRaro = (f, c) => prValido(f.nuevo[c]) && f.act[c] > 0 && Math.abs(f.nuevo[c] / f.act[c] - 1) > 0.5;
+const prConRegla = () => PR.modo === 'pct' && !!PR.regla;
+// la venta con el redondeo de arriba («para arriba a…»); costo y compra al centavo
+const prAjustar = (n, c) => c === 'venta' ? arribaA(n, PR.modo === 'pct' ? (PR.redondeo || 1) : 1) : prRed(n, c);
+const prNuevaFila = (sku, extra) => Object.assign({ sku, desc: '', disc: false, act: {}, nuevo: {}, pct: {}, mano: {}, sugDB: null, sug: null, error: null, off: false }, extra || {});
 
 async function abrirPrecios() {
   if (!(await cargarVocab())) return;
-  const ec = document.getElementById('pr-corte');
-  if (ec) ec.innerHTML = PROD.maestro === 'productos' ? '' : ' <b>Hasta el 1-ene los precios se cambian en el Dragonfish:</b> acá se arma la tabla y se baja a Excel con 📥; solo se graban los códigos de prueba (ZZPRUEBA…).';
+  const tit = document.getElementById('pr-titulo');
+  if (tit) tit.dataset.ayuda = 'Elegí el proveedor, el % de aumento, el redondeo y si la venta sale de una regla: se arma la tabla con el precio nuevo de cada '
+    + 'artículo, que se corrige a mano (el precio o el %), y se destilda lo que no va. O pegá de Excel los códigos con sus precios. Antes de grabar se ve cómo '
+    + 'queda. Costo y compra se graban en el momento; la venta puede empezar a regir más adelante, y a las empleadas de los locales les llega un aviso. El precio '
+    + 'de venta es uno solo para los tres locales y el POS lo toma solo. Cada aumento queda en 🕘 Bitácora.'
+    + (PROD.maestro === 'productos' ? '' : '\n\nHasta el 1-ene los precios se cambian en el Dragonfish: acá se arma la tabla y se baja a Excel con 📥 (queda anotado en la bitácora); solo se graban los códigos de prueba (ZZPRUEBA…).');
+  if (!RG.datos && (prVeCosto() || veo('productos.precio'))) await cargarReglas();
   if (!document.getElementById('pr-prov') && !document.getElementById('pr-texto')) pintarFormPrecios();
   pintarPanelReglas();
 }
@@ -2125,53 +2150,61 @@ function modoPrecios(m) {
   document.getElementById('pr-tabla').innerHTML = '';
   pintarFormPrecios();
   pintarPanelReglas();
+  if (m === 'bitacora') pintarBitacora();
+}
+function prOpcionesRegla() {
+  const reglas = (RG.datos?.reglas || []).filter(r => r.activa);
+  if (!RG.datos) return '';
+  return `<option value="">Sin regla (la venta sube el %)</option><option value="auto"${PR.regla === 'auto' ? ' selected' : ''}>La que le toca a cada artículo</option>`
+    + reglas.map(r => `<option value="r:${r.id}"${PR.regla === 'r:' + r.id ? ' selected' : ''}>${esc(r.nombre)}</option>`).join('');
 }
 function pintarFormPrecios() {
   const el = document.getElementById('pr-form'), v = ALTA.vocab; if (!el || !v) return;
   if (PR.modo === 'pct') {
     const campos = ['venta'].concat(prVeCosto() ? ['costo', 'compra'] : []);
     PR.campos = PR.campos.filter(c => campos.includes(c)); if (!PR.campos.length) PR.campos = ['venta'];
-    const grupos = [...new Set(v.arbol.map(x => x.grupo))];
+    const reglas = prOpcionesRegla();
     el.innerHTML = `<div class="pr-form">
-      <label>Proveedor<select id="pr-prov"><option value="">— todos —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select></label>
-      <label>Nivel 1<select id="pr-grupo" onchange="prGrupo()"><option value="">— todos —</option>${grupos.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('')}</select></label>
-      <label>Nivel 2<select id="pr-cat"><option value="">— todas —</option></select></label>
-      <label>Aumento %<input id="pr-pct" inputmode="decimal" placeholder="8 · o -5 para bajar" style="min-width:120px;width:120px" onkeydown="if(event.key==='Enter') armarPct()"></label>
-      <div class="pr-campos"><span class="mini">Precio:</span> ${campos.map(c => `<button type="button" class="fchip${PR.campos.includes(c) ? ' on' : ''}" data-c="${c}" onclick="campoPrecio('${c}')">${PR_TXT[c]}</button>`).join(' ')}</div>
-      <label class="pr-chk"><input type="checkbox" id="pr-disc"> con discontinuados</label>
+      <label><span data-ayuda="Se arma la tabla con los artículos de ese proveedor (sin los discontinuados, salvo que tildes «con discontinuados»).">Proveedor</span><select id="pr-prov"><option value="">— elegí —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}"${PR.prov?.codigo === p.codigo ? ' selected' : ''}>${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select></label>
+      <label><span data-ayuda="El aumento para todos (por ejemplo 8, o -5 para bajar). Después se puede cambiar el % de cada artículo en la tabla.">Aumento %</span><input id="pr-pct" inputmode="decimal" placeholder="8 · o -5" value="${PR.pct == null ? '' : esc(String(PR.pct).replace('.', ','))}" style="min-width:90px;width:100px" onchange="prOpcion()" onkeydown="if(event.key==='Enter') armarPct()"></label>
+      <div class="pr-campos"><span class="mini" data-ayuda="A qué listas se les aplica el %. Si elegís una regla para la venta, la venta sale de la regla (sobre el costo nuevo) y el % va al costo y la compra.">Aplicar a:</span> ${campos.map(c => `<button type="button" class="fchip${PR.campos.includes(c) ? ' on' : ''}" data-c="${c}" onclick="campoPrecio('${c}')">${PR_TXT[c]}</button>`).join(' ')}</div>
+      <label><span data-ayuda="Cómo se redondea el precio de venta nuevo: para arriba al múltiplo que elijas. «Al peso» = sin redondear (con una regla, el redondeo de la regla).">Redondeo venta</span><select id="pr-red" onchange="prOpcion()">${REDONDEOS.map(u => `<option value="${u}"${(PR.redondeo || 0) === u ? ' selected' : ''}>${u ? 'para arriba a $ ' + u.toLocaleString('es-AR') : 'al peso / el de la regla'}</option>`).join('')}</select></label>
+      ${reglas ? `<label><span data-ayuda="Si elegís una regla, la venta nueva sale de la regla de precio (costo × 3, importados por tramos…) calculada con el costo nuevo. «La que le toca a cada artículo» usa la más específica de cada uno. Las reglas se ven y se cambian en 📐 Reglas. Pasando por arriba del precio nuevo se ve la cuenta.">Regla para la venta</span><select id="pr-regla" onchange="prOpcion()">${reglas}</select></label>` : ''}
+      <label class="pr-chk"><input type="checkbox" id="pr-disc"${PR.disc ? ' checked' : ''}> con discontinuados</label>
       <button class="pill-pri" onclick="armarPct()">Armar la tabla</button>
     </div>`;
-  } else if (PR.modo === 'regla') {
-    const grupos = [...new Set(v.arbol.map(x => x.grupo))];
-    el.innerHTML = `<div class="pr-form">
-      <label>Proveedor<select id="pr-prov"><option value="">— todos —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select></label>
-      <label>Nivel 1<select id="pr-grupo" onchange="prGrupo()"><option value="">— todos —</option>${grupos.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('')}</select></label>
-      <label>Nivel 2<select id="pr-cat"><option value="">— todas —</option></select></label>
-      <label class="pr-chk"><input type="checkbox" id="pr-fuera"> solo los que están fuera de regla</label>
-      <label class="pr-chk"><input type="checkbox" id="pr-disc"> con discontinuados</label>
-      <div class="pr-campos"><span class="mini">Redondear para arriba a:</span> ${REDONDEOS.map(u => `<button type="button" class="fchip${(PR.redondeo || 0) === u ? ' on' : ''}" data-u="${u}" onclick="prRedondeo(${u})">${u ? '$ ' + u.toLocaleString('es-AR') : 'lo de la regla'}</button>`).join(' ')}</div>
-      <button class="pill-pri" onclick="armarRegla()">Armar la tabla</button>
+  } else if (PR.modo === 'pegar') {
+    el.innerHTML = `<div class="pr-form col">
+      <span class="mini" style="align-self:flex-start" data-ayuda="Con títulos se reconocen CODIGO (o SKU), VENTA (o PRECIO)${prVeCosto() ? ', COSTO, COMPRA y COSTO_USD (o USD)' : ''}, en cualquier orden; sin títulos, el código y después los precios en ese orden. Sirve el archivo que baja 📥 de esta misma pestaña.">Códigos y precios, copiados de Excel</span>
+      <textarea id="pr-texto" rows="7" placeholder="Copiá de Excel la columna del código y las de los precios, con la fila de títulos, y pegalas acá. Por ejemplo:&#10;CODIGO&#9;VENTA&#10;044010&#9;15000&#10;121212&#9;22500"></textarea>
+      <div><button class="pill-pri" onclick="armarPegado()">Ver cómo queda</button></div>
     </div>`;
   } else {
-    el.innerHTML = `<div class="pr-form col">
-      <textarea id="pr-texto" rows="7" placeholder="Copiá de Excel la columna del código y las de los precios, con la fila de títulos, y pegalas acá. Por ejemplo:&#10;CODIGO&#9;VENTA&#10;044010&#9;15000&#10;121212&#9;22500"></textarea>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="pill-pri" onclick="armarPegado()">Ver cómo queda</button>
-        <span class="mini" style="flex:1;min-width:240px">Con títulos se reconocen CODIGO (o SKU), VENTA (o PRECIO)${prVeCosto() ? ', COSTO, COMPRA y COSTO_USD (o USD)' : ''}, en cualquier orden; sin títulos, el
-          código y después los precios en ese orden. Sirve el archivo que baja 📥 de esta misma pestaña.</span></div>
-    </div>`;
+    el.innerHTML = '';
   }
-}
-function prGrupo() {
-  const g = document.getElementById('pr-grupo').value, sel = document.getElementById('pr-cat');
-  const cats = (ALTA.vocab.arbol || []).filter(x => x.grupo === g).sort((a, b) => b.n - a.n);
-  sel.innerHTML = '<option value="">— todas —</option>' + cats.map(c => `<option value="${esc(c.categoria)}">${esc(c.categoria)} (${c.n})</option>`).join('');
 }
 function campoPrecio(c) {
   const i = PR.campos.indexOf(c);
   if (i >= 0) { if (PR.campos.length > 1) PR.campos.splice(i, 1); } else PR.campos.push(c);
-  PR.campos.sort((a, b) => ['venta', 'costo', 'compra'].indexOf(a) - ['venta', 'costo', 'compra'].indexOf(b));
+  PR.campos.sort((a, b) => PR_ORDEN.indexOf(a) - PR_ORDEN.indexOf(b));
   document.querySelectorAll('#pr-form .pr-campos .fchip').forEach(b => b.classList.toggle('on', PR.campos.includes(b.dataset.c)));
+  prOpcion();
 }
+// lo de arriba (%, redondeo, regla, listas) se lee de la pantalla; si ya hay tabla, se recalcula sin volver a buscar
+function prLeerOpciones() {
+  const pct = numAR(document.getElementById('pr-pct')?.value);
+  PR.pct = pct == null || isNaN(pct) ? (pct == null ? null : NaN) : pct;
+  PR.redondeo = Number(document.getElementById('pr-red')?.value) || 0;
+  PR.regla = document.getElementById('pr-regla')?.value || '';
+}
+function prOpcion() {
+  if (PR.modo !== 'pct') return;
+  prLeerOpciones();
+  if (!PR.filas.length || Number.isNaN(PR.pct)) return;
+  prRecalcular(); pintarTablaPrecios();
+}
+const prCamposActivos = () => [...new Set(PR.campos.concat(prConRegla() ? ['venta'] : []))].sort((a, b) => PR_ORDEN.indexOf(a) - PR_ORDEN.indexOf(b));
+
 // Precios de hoy (venta = la de las filas de stock_articulos; costo y compra de stock_precios_listas, si los puede ver)
 async function preciosActuales(skus) {
   const out = {}, u = [...new Set(skus.map(s => String(s).trim().toUpperCase()).filter(Boolean))];
@@ -2191,32 +2224,99 @@ async function preciosActuales(skus) {
   return out;
 }
 async function armarPct() {
-  const prov = document.getElementById('pr-prov').value, g = document.getElementById('pr-grupo').value, cat = document.getElementById('pr-cat').value;
-  const pct = numAR(document.getElementById('pr-pct').value), disc = document.getElementById('pr-disc').checked;
-  if (!prov && !g) return toast('Elegí un proveedor o un Nivel 1 (para no tocar todo el catálogo de una vez).', 'error');
-  if (pct == null || isNaN(pct)) return toast('Poné el % (por ejemplo 8, o -5 para bajar).', 'error');
-  if (pct <= -90 || pct > 300) return toast('Ese % no parece correcto.', 'error');
+  const sel = document.getElementById('pr-prov'), prov = sel.value, disc = document.getElementById('pr-disc').checked;
+  prLeerOpciones();
+  if (!prov) return toast('Elegí el proveedor.', 'error');
+  if (Number.isNaN(PR.pct)) return toast('Ese % no se entiende (por ejemplo 8, o -5 para bajar).', 'error');
+  if (PR.pct == null && !PR.regla) return toast('Poné el % (por ejemplo 8, o -5 para bajar) o elegí una regla para la venta.', 'error');
+  if (PR.pct != null && (PR.pct <= -90 || PR.pct > 300)) return toast('Ese % no parece correcto.', 'error');
   const el = document.getElementById('pr-tabla'); el.innerHTML = '<div class="empty">Armando la tabla…</div>';
   try {
     const base = [];
     for (let desde = 0; desde < 10000; desde += 1000) {
-      let q = sb.from('productos_catalogo').select('sku, descripcion, proveedor_nombre, discontinuado').order('sku').range(desde, desde + 999);
-      if (prov) q = q.eq('proveedor_codigo', prov);
-      if (g) q = q.eq('grupo', g);
-      if (cat) q = q.eq('categoria', cat);
+      let q = sb.from('productos_catalogo').select('sku, descripcion, proveedor_nombre, discontinuado').order('sku').range(desde, desde + 999).eq('proveedor_codigo', prov);
       if (!disc) q = q.or('discontinuado.is.null,discontinuado.eq.false');
       const { data, error } = await q; if (error) throw error;
       base.push(...(data || [])); if (!data || data.length < 1000) break;
     }
-    if (!base.length) { el.innerHTML = '<div class="empty">No hay artículos con ese filtro.</div>'; return; }
-    const act = await preciosActuales(base.map(b => b.sku)), f = 1 + pct / 100;
-    PR.camposTabla = PR.campos.slice();
-    PR.filas = base.map(b => { const a = act[b.sku] || {}, nuevo = {};
-      for (const c of PR.camposTabla) nuevo[c] = a[c] > 0 ? prRed(a[c] * f, c) : null;
-      return { sku: b.sku, desc: b.descripcion || a.desc, prov: b.proveedor_nombre || a.prov, disc: !!b.discontinuado, act: a, nuevo, error: null }; });
+    if (!base.length) { el.innerHTML = '<div class="empty">Ese proveedor no tiene artículos' + (disc ? '' : ' activos') + '.</div>'; return; }
+    const [act, sug] = await Promise.all([preciosActuales(base.map(b => b.sku)), RG.datos ? prSugeridosDB(prov, disc) : Promise.resolve({})]);
+    PR.prov = { codigo: prov, nombre: (sel.selectedOptions[0]?.textContent || prov).replace(/\s*\([^)]*\)\s*$/, '') };
+    PR.disc = disc; PR.firmaExcel = null;
+    PR.filas = base.map(b => { const a = act[b.sku] || {};
+      return prNuevaFila(b.sku, { desc: b.descripcion || a.desc, disc: !!b.discontinuado, act: a, sugDB: sug[b.sku] || null }); });
+    prRecalcular();
     pintarTablaPrecios();
   } catch (e) { el.innerHTML = `<div class="alerta">${esc(errTxt(e))}</div>`; }
 }
+// la regla que le toca a cada artículo (la base elige la más específica: proveedor, Nivel 3, 2, 1, general)
+async function prSugeridosDB(prov, disc) {
+  const { data, error } = await sb.rpc('productos_sugeridos', { p: { proveedor_codigo: prov, discontinuados: disc, limite: 6000 } });
+  if (error) { console.warn('productos_sugeridos', error); return {}; }
+  const m = {}; for (const r of (data && data.filas) || []) m[r.sku] = r.sugerencia || null;
+  if (data?.dolar && RG.datos) RG.datos.dolar = data.dolar;
+  return m;
+}
+// precio nuevo de cada artículo con lo de arriba; lo cambiado a mano en la tabla se respeta
+function prRecalcular() {
+  PR.camposTabla = prCamposActivos();
+  const fac = PR.pct == null ? null : 1 + PR.pct / 100;
+  for (const f of PR.filas) {
+    if (f.aplicado) continue;
+    for (const c of Object.keys(f.nuevo)) if (!PR.camposTabla.includes(c)) { delete f.nuevo[c]; delete f.pct[c]; delete f.mano[c]; }
+    for (const c of PR.camposTabla) {
+      if (f.mano[c] || (c === 'venta' && prConRegla())) continue;
+      if (fac != null && f.act[c] > 0) { f.nuevo[c] = prAjustar(f.act[c] * fac, c); f.pct[c] = PR.pct; }
+      else { f.nuevo[c] = null; delete f.pct[c]; }
+    }
+    prReglaFila(f);
+  }
+}
+function prReglaFila(f) {
+  f.sug = prConRegla() ? prSugerir(f) : null;
+  if (f.sug && !f.mano.venta && !f.aplicado) { f.nuevo.venta = f.sug.sugerido ?? null; delete f.pct.venta; }
+}
+// la cuenta de la regla con el costo nuevo (misma cuenta que productos__sugerir de la base)
+function prSugerir(f) {
+  const reglas = RG.datos?.reglas || [];
+  let r;
+  if (PR.regla === 'auto') {
+    r = f.sugDB?.regla_id ? reglas.find(x => x.id === f.sugDB.regla_id) : null;
+    if (!r) return { regla: f.sugDB?.regla || null, motivo: f.sugDB?.motivo || 'no hay ninguna regla que le corresponda' };
+  } else {
+    r = reglas.find(x => 'r:' + x.id === PR.regla);
+    if (!r) return { motivo: 'no encontré esa regla' };
+  }
+  const esUsd = r.base === 'costo_usd', s = { regla_id: r.id, regla: r.nombre, base: r.base };
+  const base = esUsd ? f.act.costo_usd : PR.camposTabla.includes('costo') && prValido(f.nuevo.costo) ? f.nuevo.costo : f.act.costo;
+  if (!(base > 0)) return Object.assign(s, { motivo: esUsd ? 'no tiene costo en dólares' : 'no tiene costo' });
+  const tr = (r.tramos || []).map(t => ({ desde: Number(t.desde) || 0, mult: Number(t.mult) }));
+  let mult = tr.length ? tr[0].mult : null, mejor = -Infinity;
+  for (const t of tr) if (t.desde <= base && t.desde > mejor) { mejor = t.desde; mult = t.mult; }
+  if (!(mult > 0)) return Object.assign(s, { motivo: 'la regla no tiene multiplicador' });
+  let bruto = base * mult, dolar = null;
+  if (esUsd) {
+    dolar = RG.datos?.dolar;
+    if (!(Number(dolar?.venta) > 0)) return Object.assign(s, { valor_base: base, mult, motivo: 'falta el dólar del día' });
+    bruto *= Number(dolar.venta);
+  }
+  bruto = Math.round(bruto * 100) / 100;
+  const u = PR.redondeo || Number(r.redondeo) || 1;
+  return Object.assign(s, { valor_base: base, mult, dolar, bruto, redondeo: u, sugerido: arribaA(bruto, u) });
+}
+function prCuentaTexto(sg) {
+  if (!sg) return '';
+  if (!sg.sugerido) return `${sg.regla ? sg.regla + ': ' : ''}${sg.motivo || 'sin sugerido'}`;
+  const m = '× ' + Number(sg.mult).toLocaleString('es-AR', { maximumFractionDigits: 4 });
+  const cuenta = sg.base === 'costo_usd' ? `${usd(sg.valor_base)} ${m} × ${plata2(sg.dolar?.venta)}` : `costo ${plata2(sg.valor_base)} ${m}`;
+  return `${sg.regla}: ${cuenta} = ${plata2(sg.bruto)} → para arriba a ${redTxt(sg.redondeo)}: ${plata(sg.sugerido)}`;
+}
+function prReglaCelda(f) {
+  const sg = f.sug; if (!sg) return '—';
+  if (!sg.sugerido) return `${sg.regla ? esc(sg.regla) + ' ' : ''}<span class="chip amber">${esc(sg.motivo || 'sin sugerido')}</span>`;
+  return `${esc(sg.regla)}<div class="mini">${cuentaSugerido(sg)} → ${esc(redTxt(sg.redondeo))}</div>`;
+}
+
 // Lo pegado de Excel (tabulado), de un CSV (;) o escrito a mano (espacios)
 function parsearPegado(txt) {
   const lineas = String(txt || '').replace(/\r/g, '').split('\n').filter(l => l.trim());
@@ -2255,100 +2355,307 @@ async function armarPegado() {
   const el = document.getElementById('pr-tabla'); el.innerHTML = '<div class="empty">Buscando los precios de hoy…</div>';
   try {
     const act = await preciosActuales(r.filas.map(x => x.sku));
-    PR.camposTabla = campos;
-    PR.filas = r.filas.map(x => { const a = act[x.sku], nuevo = {};
-      for (const c of campos) nuevo[c] = x.vals[c] === undefined ? null : x.vals[c] == null || isNaN(x.vals[c]) ? NaN : prRed(x.vals[c], c);
-      return { sku: x.sku, desc: a?.desc, prov: a?.prov, disc: !!a?.disc, act: a || {}, nuevo,
-               error: !a ? 'no existe ese código' : x.malo ? 'precio que no se entiende' : null, repetido: x.repetido }; });
+    PR.camposTabla = campos; PR.prov = null; PR.firmaExcel = null;
+    PR.filas = r.filas.map(x => { const a = act[x.sku], f = prNuevaFila(x.sku, { desc: a?.desc, disc: !!a?.disc, act: a || {}, repetido: x.repetido,
+        error: !a ? 'no existe ese código' : x.malo ? 'precio que no se entiende' : null });
+      for (const c of campos) f.nuevo[c] = x.vals[c] === undefined ? null : x.vals[c] == null || isNaN(x.vals[c]) ? NaN : prRed(x.vals[c], c);
+      return f; });
     pintarTablaPrecios();
   } catch (e) { el.innerHTML = `<div class="alerta">${esc(errTxt(e))}</div>`; }
 }
-function prDif(f, c) {
+
+// ── la tabla ──
+// la diferencia real contra el precio de hoy (con el redondeo); el globito dice el % que se aplicó si no coincide
+const prPctFmt = (p, dec) => Math.abs(p) < 0.005 ? '0 %' : `${p > 0 ? '+' : ''}${p.toLocaleString('es-AR', { maximumFractionDigits: dec })} %`;
+function prPctTxt(f, c) {
   if (!prValido(f.nuevo[c]) || !(f.act[c] > 0)) return '';
-  const p = (f.nuevo[c] / f.act[c] - 1) * 100;
-  if (Math.abs(p) < 0.005) return '<span class="mini">=</span>';
-  return `<span class="${prRaro(f, c) ? 'pr-raro' : 'mini'}">${p > 0 ? '+' : ''}${p.toLocaleString('es-AR', { maximumFractionDigits: 1 })} %</span>`;
+  return prPctFmt((f.nuevo[c] / f.act[c] - 1) * 100, 1);
+}
+function prPctTit(f, c) {
+  if (!prValido(f.nuevo[c]) || !(f.act[c] > 0)) return f.act[c] > 0 ? 'Poné un % para darle precio nuevo a este artículo' : 'Sin precio de hoy: no se puede sacar un %';
+  const ef = (f.nuevo[c] / f.act[c] - 1) * 100;
+  const t = 'Cambiá el % para darle otro aumento a este artículo';
+  return f.pct[c] != null && Math.abs(ef - f.pct[c]) >= 0.05 ? `Se aplicó ${prPctFmt(f.pct[c], 2)}; con el redondeo queda en ${prPctFmt(ef, 2)}. ${t}.` : t + '.';
+}
+function prTitNuevo(f, c) {
+  if (c === 'venta' && f.sug) return prCuentaTexto(f.sug) + (f.mano.venta ? ' · el precio nuevo está cambiado a mano' : '');
+  return f.mano[c] ? 'Cambiado a mano' : '';
 }
 function prEstado(f) {
   if (f.error) return `<span class="chip red">${esc(f.error)}</span>`;
+  if (f.aplicado && f.programado) return `<span class="chip amber" title="Costo y compra ya quedaron grabados; la venta cambia sola a esa hora">⏳ la venta rige ${esc(fechaHora(f.programado))}</span>`;
   if (f.aplicado) return '<span class="chip green">✅ grabado</span>';
+  if (f.off) return '<span class="chip gray">no se aplica</span>';
   if (PR.camposTabla.some(c => Number.isNaN(f.nuevo[c]))) return '<span class="chip red">precio que no se entiende</span>';
-  if (!prCambios(f).length) return '<span class="chip gray">sin cambio</span>';
+  if (!prCambios(f).length) return f.sug && !f.sug.sugerido ? `<span class="chip gray" title="${esc(prCuentaTexto(f.sug))}">sin cambio · sin regla</span>` : '<span class="chip gray">sin cambio</span>';
   if (!modoMaestro(f.sku)) return '<span class="chip amber" title="Hasta el corte este precio se cambia en el Dragonfish: bajá la tabla a Excel con 📥">🔒 Dragonfish</span>';
   return `<span class="chip" style="background:var(--primary-bg);color:var(--primary)">cambia${f.repetido ? ' · repetido, vale el último' : ''}</span>`;
 }
+function prCeldas(f, i, c, bloq) {
+  const nu = f.nuevo[c], mal = Number.isNaN(nu);
+  return `<td class="num">${f.act[c] != null ? prMuestra(f.act[c], c) : '<span class="mini">—</span>'}</td>
+    <td class="num"><input class="pr-in pr-nu${mal ? ' mal' : prCambios(f).includes(c) ? ' cambia' : ''}${c === 'venta' && f.sug ? ' regla' : ''}" data-i="${i}" data-c="${c}" inputmode="decimal" value="${mal ? esc(f.texto?.[c] ?? '') : prEnInput(nu, c)}" title="${esc(prTitNuevo(f, c))}" onchange="precioEditado(this)" ${bloq ? 'disabled' : ''}></td>
+    <td class="num"><input class="pr-in pr-pct${prRaro(f, c) ? ' raro' : ''}" data-i="${i}" data-c="${c}" inputmode="decimal" value="${prPctTxt(f, c)}" title="${esc(prPctTit(f, c))}" onchange="pctEditado(this)" ${bloq || !(f.act[c] > 0) ? 'disabled' : ''}></td>`;
+}
+function prFila(f, i, cs, conRegla) {
+  const bloq = f.error === 'no existe ese código' || f.aplicado;
+  const cl = [f.disc ? 'dim' : '', f.off ? 'pr-off' : ''].filter(Boolean).join(' ');
+  return `<tr id="pr-f-${i}"${cl ? ` class="${cl}"` : ''}${f.disc ? ' title="Discontinuado"' : ''}>
+    <td class="pr-tilde"><input type="checkbox" aria-label="Aplicar a ${esc(f.sku)}" ${f.off ? '' : 'checked'} ${f.aplicado ? 'disabled' : ''} onclick="prTilde(${i}, this.checked)"></td>
+    <td class="clic" onclick="abrirFicha('${esc(f.sku)}')" title="Abrir la ficha"><b>${esc(f.sku)}</b></td><td class="rec">${esc(f.desc || '—')}</td>
+    ${conRegla ? `<td class="mini rec" id="pr-r-${i}">${prReglaCelda(f)}</td>` : ''}
+    ${cs.map(c => prCeldas(f, i, c, bloq)).join('')}
+    <td id="pr-e-${i}">${prEstado(f)}</td></tr>`;
+}
+// (27-nov, JP: «que esté en una columna que empiece oculta y si la quiero ver, la pueda desocultar») la columna «Regla»
+// arranca oculta la primera vez en cada computadora; después adorno-tablas recuerda si la mostró (mismo guardado que usa
+// para las columnas ocultas: adorno.tt.ocultas.<módulo>.<clave de la tabla>, id de la columna = su título en minúsculas).
+function prReglaOcultaLaPrimeraVez() {
+  try {
+    if (localStorage.getItem('productos.precios.regla_oculta')) return;
+    const k = 'adorno.tt.ocultas.' + ((location.pathname.split('/').filter(Boolean)[0]) || 'raiz') + '.productos-precios';
+    const s = new Set(JSON.parse(localStorage.getItem(k) || '[]')); s.add('regla');
+    localStorage.setItem(k, JSON.stringify([...s])); localStorage.setItem('productos.precios.regla_oculta', '1');
+  } catch (_) {}
+}
 function pintarTablaPrecios() {
-  const cs = PR.camposTabla, el = document.getElementById('pr-tabla');
+  const cs = PR.camposTabla, el = document.getElementById('pr-tabla'), conRegla = prConRegla();
+  if (conRegla) prReglaOcultaLaPrimeraVez();
   el.innerHTML = `<div class="card pr-pie" id="pr-resumen"></div>
-    <div style="overflow-x:auto"><table class="compacta pr-tabla"><thead><tr><th>Código</th><th>Descripción</th><th>Proveedor</th>${PR.modo === 'regla' ? '<th>Regla · cuenta</th>' : ''}
-      ${cs.map(c => `<th class="num">${PR_TXT[c]} hoy</th><th class="num">${PR_TXT[c]} nuevo</th><th class="num">Dif.</th>`).join('')}<th>Estado</th></tr></thead>
-    <tbody>${PR.filas.map((f, i) => `<tr${f.disc ? ' class="dim" title="Discontinuado"' : ''}>
-      <td class="clic" onclick="abrirFicha('${esc(f.sku)}')" title="Abrir la ficha"><b>${esc(f.sku)}</b></td><td class="rec">${esc(f.desc || '—')}</td><td class="mini rec prov">${esc(f.prov || '')}</td>${PR.modo === 'regla' ? `<td class="mini rec" title="${esc(f.sug?.regla || '')}">${cuentaSugerido(f.sug)}</td>` : ''}
-      ${cs.map(c => `<td class="num">${f.act[c] != null ? prMuestra(f.act[c], c) : '<span class="mini">—</span>'}</td>
-        <td class="num"><input class="pr-in${Number.isNaN(f.nuevo[c]) ? ' mal' : prCambios(f).includes(c) ? ' cambia' : ''}" data-i="${i}" data-c="${c}" inputmode="decimal" value="${prEnInput(f.nuevo[c], c)}" onchange="precioEditado(this)" ${f.error === 'no existe ese código' || f.aplicado ? 'disabled' : ''}></td>
-        <td class="num" id="pr-d-${i}-${c}">${prDif(f, c)}</td>`).join('')}
-      <td id="pr-e-${i}">${prEstado(f)}</td></tr>`).join('')}</tbody></table></div>`;
+    <div style="overflow-x:auto"><table class="compacta pr-tabla" data-tt-clave="productos-precios"><thead><tr>
+      <th class="pr-tilde"><input type="checkbox" id="pr-todos" title="Tildar o destildar todos los que se ven" aria-label="Todos" onclick="prTodos(this.checked)"></th>
+      <th>Código</th><th>Descripción</th>${conRegla ? '<th title="La regla de cada artículo y la cuenta del precio de venta">Regla</th>' : ''}
+      ${cs.map(c => `<th class="num" title="${PR_TXT[c]} de hoy">${PR_CORTO[c]} hoy</th><th class="num" title="${PR_TXT[c]} nuevo">${PR_CORTO[c]} nuevo</th><th class="num" title="Diferencia en %: cambiala para darle otro % a ese artículo">Dif. %</th>`).join('')}<th>Estado</th></tr></thead>
+    <tbody>${PR.filas.map((f, i) => prFila(f, i, cs, conRegla)).join('')}</tbody></table></div>`;
+  prTildeTodos();
   resumenPrecios();
+}
+function prActualizarFila(i) {
+  const f = PR.filas[i], tr = document.getElementById('pr-f-' + i); if (!f || !tr) return;
+  const cambia = prCambios(f);
+  for (const c of PR.camposTabla) {
+    const nu = tr.querySelector(`input.pr-nu[data-c="${c}"]`), p = tr.querySelector(`input.pr-pct[data-c="${c}"]`), mal = Number.isNaN(f.nuevo[c]);
+    if (nu) {
+      if (!mal) nu.value = prEnInput(f.nuevo[c], c);
+      nu.classList.toggle('mal', mal); nu.classList.toggle('cambia', !mal && cambia.includes(c)); nu.classList.toggle('regla', c === 'venta' && !!f.sug);
+      nu.title = prTitNuevo(f, c);
+    }
+    if (p) { p.value = prPctTxt(f, c); p.title = prPctTit(f, c); p.classList.toggle('raro', prRaro(f, c)); }
+  }
+  const r = document.getElementById('pr-r-' + i); if (r) r.innerHTML = prReglaCelda(f);
+  document.getElementById('pr-e-' + i).innerHTML = prEstado(f);
+  tr.classList.toggle('pr-off', !!f.off);
+}
+function prDespuesDeEditar(f, i, c) {
+  if (f.error === 'precio que no se entiende' && PR.camposTabla.every(k => !Number.isNaN(f.nuevo[k]))) f.error = null;
+  if (c === 'costo' && prConRegla()) prReglaFila(f);   // la venta por regla sigue al costo nuevo
+  prActualizarFila(i); resumenPrecios();
 }
 function precioEditado(inp) {
   const i = +inp.dataset.i, c = inp.dataset.c, f = PR.filas[i]; if (!f) return;
   const v = numAR(inp.value);
   f.nuevo[c] = v == null ? null : !prValido(v) ? NaN : prRed(v, c);
-  f.mano = true;
-  if (f.error === 'precio que no se entiende' && PR.camposTabla.every(k => !Number.isNaN(f.nuevo[k]))) f.error = null;
-  inp.classList.toggle('mal', Number.isNaN(f.nuevo[c]));
-  inp.classList.toggle('cambia', prCambios(f).includes(c));
-  if (prValido(f.nuevo[c])) inp.value = prEnInput(f.nuevo[c], c);
-  document.getElementById(`pr-d-${i}-${c}`).innerHTML = prDif(f, c);
-  document.getElementById(`pr-e-${i}`).innerHTML = prEstado(f);
-  resumenPrecios();
+  if (Number.isNaN(f.nuevo[c])) (f.texto = f.texto || {})[c] = inp.value;
+  f.mano[c] = true; delete f.pct[c];
+  prDespuesDeEditar(f, i, c);
 }
+function pctEditado(inp) {
+  const i = +inp.dataset.i, c = inp.dataset.c, f = PR.filas[i]; if (!f || !(f.act[c] > 0)) return;
+  const s = String(inp.value).replace(/[%+\s]/g, '');
+  if (!s) { f.nuevo[c] = null; delete f.pct[c]; }
+  else {
+    const p = numAR(s);
+    if (p == null || isNaN(p) || p <= -90 || p > 300) { toast('Ese % no se entiende (por ejemplo 8, o -5 para bajar).', 'error'); prActualizarFila(i); return; }
+    f.nuevo[c] = prAjustar(f.act[c] * (1 + p / 100), c); f.pct[c] = p;
+  }
+  f.mano[c] = true;
+  prDespuesDeEditar(f, i, c);
+}
+// casilla de cada artículo: destildado = no se le aplica (ni se graba ni va al Excel)
+function prTilde(i, on) {
+  const f = PR.filas[i]; if (!f || f.aplicado) return;
+  f.off = !on; prActualizarFila(i); prTildeTodos(); resumenPrecios();
+}
+function prTodos(on) {   // los que se ven (si la tabla está filtrada, solo esos)
+  PR.filas.forEach((f, i) => {
+    const tr = document.getElementById('pr-f-' + i);
+    if (!tr || f.aplicado || tr.classList.contains('tt-fuera') || tr.style.display === 'none') return;   // tt-fuera: lo que el filtro de adorno-tablas esconde
+    f.off = !on; const ch = tr.querySelector('td.pr-tilde input'); if (ch) ch.checked = on; prActualizarFila(i);
+  });
+  prTildeTodos(); resumenPrecios();
+}
+function prTildeTodos() {
+  const t = document.getElementById('pr-todos'); if (!t) return;
+  const libres = PR.filas.filter(f => !f.aplicado), off = libres.filter(f => f.off).length;
+  t.checked = libres.length > 0 && off === 0; t.indeterminate = off > 0 && off < libres.length;
+}
+const prParaAplicar = f => !f.off && !f.error && !f.aplicado && !PR.camposTabla.some(c => Number.isNaN(f.nuevo[c])) && prCambios(f).length > 0;
+const prItem = f => { const ch = prCambios(f), antes = {}, nuevo = {};
+  ch.forEach(c => { antes[c] = f.act[c] ?? null; nuevo[c] = f.nuevo[c]; });
+  return { sku: f.sku, descripcion: f.desc || null, antes, nuevo }; };
 function prParaGrabar() {
   const items = [], idx = []; let raros = 0;
   PR.filas.forEach((f, i) => {
-    if (f.error || f.aplicado || !modoMaestro(f.sku) || PR.camposTabla.some(c => Number.isNaN(f.nuevo[c]))) return;
-    const ch = prCambios(f); if (!ch.length) return;
-    const it = { sku: f.sku }; ch.forEach(c => { it[c] = f.nuevo[c]; if (prRaro(f, c)) raros++; });
-    items.push(it); idx.push(i);
+    if (!prParaAplicar(f) || !modoMaestro(f.sku)) return;
+    prCambios(f).forEach(c => { if (prRaro(f, c)) raros++; });
+    items.push(prItem(f)); idx.push(i);
   });
   return { items, idx, raros };
 }
+// lo que eligió arriba, para la bitácora
+function prCabecera() {
+  const reglaTxt = !prConRegla() ? null : PR.regla === 'auto' ? 'la que le toca a cada artículo' : ((RG.datos?.reglas || []).find(r => 'r:' + r.id === PR.regla)?.nombre || null);
+  return { modo: PR.modo === 'pegar' ? 'pegar' : 'pct', proveedor_codigo: PR.prov?.codigo || null, proveedor_nombre: PR.prov?.nombre || null,
+           pct: PR.modo === 'pct' ? PR.pct : null, redondeo: PR.modo === 'pct' && PR.redondeo ? PR.redondeo : null, regla: reglaTxt, campos: PR.camposTabla };
+}
+const prAhoraLocal = () => { const d = new Date(Date.now() - 3 * 3600e3); return d.toISOString().slice(0, 16); };   // Argentina (UTC−3)
 function resumenPrecios() {
   const el = document.getElementById('pr-resumen'); if (!el) return;
   const { items, raros } = prParaGrabar();
-  const conCambio = PR.filas.filter(f => !f.error && !f.aplicado && prCambios(f).length);
+  const conCambio = PR.filas.filter(prParaAplicar);
   const dragon = conCambio.filter(f => !modoMaestro(f.sku)).length, err = PR.filas.filter(f => f.error || PR.camposTabla.some(c => Number.isNaN(f.nuevo[c]))).length;
-  const graba = PR.filas.filter(f => f.aplicado).length;
-  el.innerHTML = `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:240px"><b>${PR.filas.length}</b> artículo${PR.filas.length === 1 ? '' : 's'} · <b>${items.length}</b> para grabar${dragon ? ` · <span title="Hasta el 1-ene se cambian en el Dragonfish: bajalos a Excel con 📥">🔒 ${dragon} para el Dragonfish</span>` : ''}${err ? ` · <span style="color:var(--red)">${err} con error</span>` : ''}${raros ? ` · <span class="pr-raro">⚠ ${raros} cambian más de 50 %</span>` : ''}${graba ? ` · ✅ ${graba} grabado${graba === 1 ? '' : 's'}` : ''}
-      <div class="mini">Corregí a mano el precio nuevo que haga falta (por ejemplo, para redondear); vacío = no se toca.</div></div>
-    <button class="pill-no" onclick="bajarPreciosExcel()" title="Bajar la tabla (con los precios nuevos) a un archivo para Excel">📥 Excel</button>
+  const graba = PR.filas.filter(f => f.aplicado).length, off = PR.filas.filter(f => f.off && !f.aplicado).length;
+  const venta = PR.camposTabla.includes('venta');
+  el.innerHTML = `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:240px"><b data-ayuda="Corregí a mano el precio nuevo o el % de cualquier artículo (vacío = no se toca). Destildá la casilla de un artículo para dejarlo afuera. Pasando por arriba del precio nuevo de venta se ve la cuenta de la regla; la columna «Regla» se muestra desde el embudito de cualquier título → Columnas.">${PR.filas.length} artículo${PR.filas.length === 1 ? '' : 's'}</b> · <b>${items.length}</b> para grabar${dragon ? ` · <span title="Hasta el 1-ene se cambian en el Dragonfish: bajalos a Excel con 📥">🔒 ${dragon} para el Dragonfish</span>` : ''}${off ? ` · ${off} destildado${off === 1 ? '' : 's'}` : ''}${err ? ` · <span style="color:var(--red)">${err} con error</span>` : ''}${raros ? ` · <span class="pr-raro">⚠ ${raros} cambian más de 50 %</span>` : ''}${graba ? ` · ✅ ${graba} grabado${graba === 1 ? '' : 's'}` : ''}</div>
+    ${venta ? `<label class="pr-rige"><span data-ayuda="Costo y compra se graban en el momento. La venta puede empezar a regir más adelante, para que los locales tengan tiempo de cambiar las etiquetas: elegí el día y la hora (vacío = rige ya). A las empleadas de Alcorta y Unicenter les llega un aviso al grabarlo y otro cuando empieza a regir.">La venta rige desde</span><input type="datetime-local" id="pr-rige" min="${prAhoraLocal()}" value="${esc(PR.rige || '')}" onchange="PR.rige=this.value"></label>` : ''}
+    <button class="pill-no" onclick="bajarPreciosExcel()" title="Bajar la tabla (con los precios nuevos de los tildados) a un archivo para Excel. Lo que es para el Dragonfish queda anotado en la bitácora">📥 Excel</button>
     <button class="pill-pri" onclick="aplicarPrecios()" ${items.length ? '' : 'disabled'}>✅ Grabar ${items.length}</button></div>`;
 }
 async function aplicarPrecios() {
   const { items, idx, raros } = prParaGrabar();
   if (!items.length) return toast('No hay precios para grabar.');
-  if (!confirm(`Se graban los precios nuevos de ${items.length} artículo${items.length === 1 ? '' : 's'}.${raros ? `\n\n⚠ ${raros} cambian más de 50 %: revisalos antes de seguir.` : ''}\n\nLa venta cambia en los tres locales y el POS la toma solo en unos minutos. ¿Seguimos?`)) return;
-  const reg = await registrarQuien('productos.precio', { accion: 'precios en bloque', modo: PR.modo, articulos: items.length, skus: items.slice(0, 30).map(x => x.sku) });
+  const conVenta = items.some(x => x.nuevo.venta != null), soloVenta = items.every(x => Object.keys(x.nuevo).every(c => c === 'venta'));
+  let rige = null;
+  const rv = (document.getElementById('pr-rige')?.value || PR.rige || '').trim();
+  if (conVenta && rv) {
+    const d = new Date(rv + ':00-03:00');
+    if (isNaN(d)) return toast('No entiendo la fecha y hora desde la que rige.', 'error');
+    if (d.getTime() < Date.now() - 60000) return toast('Esa fecha y hora ya pasaron: dejala vacía para que la venta rija ya.', 'error');
+    rige = d.toISOString();
+  }
+  const cuando = rige ? fechaHora(rige) : null;
+  const txtVenta = !conVenta ? '' : rige ? `\n\nLa venta empieza a regir el ${cuando}${soloVenta ? '' : '; costo y compra se graban ya'}. A las empleadas de los locales les llega un aviso ahora y otro a esa hora.`
+    : '\n\nLa venta cambia ya en los tres locales (el POS la toma solo en unos minutos) y a las empleadas de los locales les llega un aviso.';
+  if (!confirm(`Se graban los precios nuevos de ${items.length} artículo${items.length === 1 ? '' : 's'}.${txtVenta}${raros ? `\n\n⚠ ${raros} cambian más de 50 %: revisalos antes de seguir.` : ''}\n\n¿Seguimos?`)) return;
+  const reg = await registrarQuien('productos.precio', { accion: 'aumento de precios', modo: PR.modo, proveedor: PR.prov?.codigo || null, articulos: items.length, rige_desde: rige, skus: items.slice(0, 30).map(x => x.sku) });
   if (!reg) return;
-  const { data, error } = await reg.db.rpc('productos_precios_aplicar', { p_items: items, p_origen: 'bloque', p_registro: reg.id || null });
+  const { data, error } = await reg.db.rpc('productos_aumento_grabar', { p: Object.assign(prCabecera(), { rige_desde: rige, items }), p_registro: reg.id || null });
   if (error) return avisoError(error);
   const errs = new Map((data.errores || []).map(e => [e.sku, e.error]));
+  const prog = data.estado === 'programado' ? data.rige_desde : null;
   idx.forEach(i => { const f = PR.filas[i];
-    if (errs.has(f.sku)) f.error = errs.get(f.sku);
-    else { f.aplicado = true; PR.camposTabla.forEach(c => { if (prValido(f.nuevo[c])) f.act[c] = f.nuevo[c]; }); } });
+    if (errs.has(f.sku)) { f.error = errs.get(f.sku); return; }
+    f.aplicado = true; f.programado = prog && f.nuevo.venta != null ? prog : null;
+    PR.camposTabla.forEach(c => { if (prValido(f.nuevo[c]) && !(c === 'venta' && f.programado)) f.act[c] = f.nuevo[c]; }); });
   pintarTablaPrecios();
-  toast(`✅ ${data.aplicados} artículo${data.aplicados === 1 ? '' : 's'} con precio nuevo${data.sin_cambio ? ' · ' + data.sin_cambio + ' sin cambio' : ''}${errs.size ? ' · ' + errs.size + ' con error' : ''}`, errs.size ? 'error' : 'success');
+  const ok = idx.length - errs.size;
+  toast(prog ? `✅ Grabado (${ok}): la venta rige ${fechaHora(prog)} y se avisó a los locales${errs.size ? ' · ' + errs.size + ' con error' : ''}`
+             : `✅ ${ok} artículo${ok === 1 ? '' : 's'} con precio nuevo${errs.size ? ' · ' + errs.size + ' con error' : ''}`, errs.size ? 'error' : 'success');
 }
 function bajarPreciosExcel() {
-  const cs = PR.camposTabla;
+  const cs = PR.camposTabla, filas = PR.filas.filter(f => !f.off);
+  if (!filas.length) return toast('No hay ningún artículo tildado.');
   const num = (n, c) => !prValido(n) ? '' : String(prRed(n, c)).replace('.', ',');
   const lin = [['CODIGO', 'DESCRIPCION', 'PROVEEDOR'].concat(cs.map(c => c.toUpperCase())).join(';')]
-    .concat(PR.filas.map(f => [f.sku, f.desc || '', f.prov || ''].map(_csvCampo).concat(cs.map(c => num(prValido(f.nuevo[c]) ? f.nuevo[c] : f.act[c], c))).join(';')));
+    .concat(filas.map(f => [f.sku, f.desc || '', PR.prov?.nombre || f.act.prov || ''].map(_csvCampo).concat(cs.map(c => num(prValido(f.nuevo[c]) ? f.nuevo[c] : f.act[c], c))).join(';')));
   const blob = new Blob(['﻿' + lin.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `precios ${hoyAR()}.csv`; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  prAnotarDragonfish();
 }
+// (27-nov, JP: hasta el 1-ene «también lo bajado a Excel») lo que va al Dragonfish queda en la bitácora, una vez por tabla
+async function prAnotarDragonfish() {
+  const items = PR.filas.filter(f => prParaAplicar(f) && !modoMaestro(f.sku)).map(prItem);
+  if (!items.length || !veo('productos.precio')) return;
+  const firma = JSON.stringify(items);
+  if (firma === PR.firmaExcel) return;
+  const { error } = await sb.rpc('productos_aumento_grabar', { p: Object.assign(prCabecera(), { dragonfish: true, items }), p_registro: null });
+  if (error) { console.warn('bitácora', error); return; }
+  PR.firmaExcel = firma;
+  toast('🕘 Quedó anotado en la bitácora (para el Dragonfish)', 'success');
+}
+
+// ── 🕘 Bitácora: los aumentos, el más nuevo arriba ──
+const BIT = { lista: [], abierto: null };
+const bitEstado = a => (a.estado === 'programado' ? '<span class="chip amber">⏳ programado</span>' : a.estado === 'vigente' ? '<span class="chip green">✅ vigente</span>'
+  : a.estado === 'cancelado' ? '<span class="chip gray">✖ cancelado</span>' : '<span class="chip" style="background:var(--primary-bg);color:var(--primary)">📥 para el Dragonfish</span>')
+  + (a.es_prueba ? ' <span class="chip gray" title="Solo códigos de prueba (ZZPRUEBA…): el aviso le llegó solo a quien lo cargó">🧪 prueba</span>' : '');
+function bitQue(a) {
+  const campos = (a.campos || []).map(c => PR_TXT[c] || c).join(', ').toLowerCase();
+  const p = [];
+  if (a.modo === 'pegar') p.push('Pegado de Excel' + (campos ? ` (${campos})` : ''));
+  else if (a.pct != null) p.push(`${a.pct > 0 ? '+' : ''}${Number(a.pct).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %${campos ? ' a ' + campos : ''}`);
+  if (a.regla) p.push('venta por regla: ' + a.regla);
+  if (a.redondeo) p.push('para arriba a $ ' + Number(a.redondeo).toLocaleString('es-AR'));
+  return esc(p.join(' · ') || '—');
+}
+async function pintarBitacora() {
+  const el = document.getElementById('pr-tabla'); if (!el) return;
+  el.innerHTML = '<div class="empty">Cargando la bitácora…</div>';
+  const { data, error } = await sb.rpc('productos_aumentos_listar', { p_limite: 300 });
+  if (PR.modo !== 'bitacora') return;
+  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
+  BIT.lista = data || [];
+  if (!BIT.lista.length) { el.innerHTML = '<div class="empty">Todavía no hay aumentos anotados. Cada aumento que se graba (o se baja a Excel para el Dragonfish) queda acá.</div>'; return; }
+  const ed = veo('productos.precio');
+  el.innerHTML = `<div style="overflow-x:auto"><table class="compacta bit-tabla" data-tt-clave="productos-bitacora"><thead><tr>
+      <th>Cargado</th><th>Quién</th><th>Proveedor</th><th>Qué</th><th class="num">Artículos</th><th>La venta rige</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${BIT.lista.map(a => `<tr id="bit-${a.id}">
+      <td class="mini" data-valor="${esc(a.creado_at)}">${esc(fechaHora(a.creado_at))}</td><td>${esc(nombreLindo(a.creado_por) || '—')}</td>
+      <td>${esc(a.proveedor_nombre || a.proveedor_codigo || '—')}</td><td class="rec">${bitQue(a)}</td><td class="num">${a.articulos}</td>
+      <td class="mini" data-valor="${esc(a.rige_desde || '')}">${a.estado === 'dragonfish' ? '—' : a.n_venta ? esc(fechaHora(a.rige_desde)) : '<span title="Solo costo o compra">—</span>'}${a.estado === 'cancelado' && a.cancelado_por ? `<div class="mini">canceló ${esc(nombreLindo(a.cancelado_por))}</div>` : ''}</td>
+      <td>${bitEstado(a)}${a.n_errores ? ` <span class="chip red" title="Artículos que no se pudieron grabar (se ven en el detalle)">${a.n_errores} con error</span>` : ''}</td>
+      <td class="acc"><button class="ib" onclick="bitDetalle(${a.id})" title="Ver los artículos" aria-label="Ver los artículos"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        ${ed && a.estado === 'programado' ? `<button class="ib rojo" onclick="bitCancelar(${a.id})" title="Cancelar: la venta no cambia (costo y compra ya quedaron grabados)" aria-label="Cancelar"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>` : ''}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+async function bitDetalle(id) {
+  const ya = document.getElementById('bit-d-' + id);
+  if (ya) { ya.remove(); return; }
+  const tr = document.getElementById('bit-' + id); if (!tr) return;
+  const { data, error } = await sb.rpc('productos_aumento_detalle', { p_id: id });
+  if (error) return avisoError(error);
+  const its = data?.items || [], errs = data?.aumento?.errores || [];
+  const cs = ['venta', 'costo', 'compra', 'costo_usd'].filter(c => its.some(x => x[c] != null));
+  const dif = (a, b) => a > 0 && b != null ? `${b / a >= 1 ? '+' : ''}${((b / a - 1) * 100).toLocaleString('es-AR', { maximumFractionDigits: 1 })} %` : '';
+  const det = document.createElement('tr'); det.id = 'bit-d-' + id; det.className = 'bit-det';
+  det.innerHTML = `<td colspan="8"><div style="overflow-x:auto"><table class="compacta" data-tt="no"><thead><tr><th>Código</th><th>Descripción</th>
+      ${cs.map(c => `<th class="num">${PR_CORTO[c]} antes</th><th class="num">${PR_CORTO[c]} nuevo</th><th class="num">Dif.</th>`).join('')}</tr></thead>
+    <tbody>${its.map(x => `<tr><td class="clic" onclick="abrirFicha('${esc(x.sku)}')"><b>${esc(x.sku)}</b></td><td class="rec">${esc(x.descripcion || '—')}</td>
+      ${cs.map(c => `<td class="num">${x[c + '_antes'] != null ? prMuestra(x[c + '_antes'], c) : '—'}</td><td class="num">${x[c] != null ? '<b>' + prMuestra(x[c], c) + '</b>' : '—'}</td><td class="num mini">${dif(x[c + '_antes'], x[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    ${errs.length ? `<div class="mini" style="margin-top:6px;color:var(--red)">No se grabaron: ${errs.map(e => esc((e.sku ? e.sku + ': ' : '') + e.error)).join(' · ')}</div>` : ''}</td>`;
+  tr.after(det);
+}
+async function bitCancelar(id) {
+  const a = BIT.lista.find(x => x.id === id); if (!a) return;
+  if (!confirm(`Se cancela el cambio de la venta de ${a.articulos} artículo${a.articulos === 1 ? '' : 's'}${a.proveedor_nombre ? ' de ' + a.proveedor_nombre : ''} que iba a regir el ${fechaHora(a.rige_desde)}.\n\nCosto y compra ya quedaron grabados (eso no se vuelve atrás). A las empleadas de los locales les llega un aviso.\n\n¿Seguimos?`)) return;
+  const reg = await registrarQuien('productos.precio', { accion: 'cancelar aumento', aumento: id });
+  if (!reg) return;
+  const { error } = await reg.db.rpc('productos_aumento_cancelar', { p_id: id, p_registro: reg.id || null });
+  if (error) return avisoError(error);
+  toast('✖ Cancelado: la venta no cambia', 'success');
+  pintarBitacora();
+}
+
+// (27-nov-2026, JP: «los textos explicativos ocultalos, que aparezcan solo cuando paso por arriba de algún título») un
+// título con data-ayuda muestra su explicación en un globito al pasar el mouse (o al tocarlo, en el celular)
+(function () {
+  let pop = null, actual = null;
+  const cerrar = () => { if (pop) pop.remove(); pop = null; actual = null; };
+  const abrir = el => {
+    const t = el.getAttribute('data-ayuda'); if (!t) return;
+    cerrar(); actual = el;
+    pop = document.createElement('div'); pop.className = 'ayuda-pop'; pop.textContent = t; document.body.appendChild(pop);
+    const r = el.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    const x = Math.max(8, Math.min(r.left, innerWidth - w - 8));
+    let y = r.bottom + 8; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    pop.style.left = x + 'px'; pop.style.top = y + 'px';
+  };
+  document.addEventListener('mouseover', e => { const el = e.target.closest && e.target.closest('[data-ayuda]'); if (el) { if (el !== actual) abrir(el); } else if (actual) cerrar(); });
+  document.addEventListener('click', e => { const el = e.target.closest && e.target.closest('[data-ayuda]'); if (el) { if (el !== actual) abrir(el); } else cerrar(); }, true);
+  addEventListener('scroll', cerrar, true);
+})();
 
 // Precios desde la ficha (un artículo): venta para los tres locales, costo y compra si los ve
 function preciosFicha() {
@@ -2422,7 +2729,7 @@ async function cargarReglas() {
 }
 async function pintarPanelReglas() {
   const el = document.getElementById('pr-reglas'); if (!el) return;
-  if (PR.modo !== 'regla') { el.innerHTML = ''; return; }
+  if (PR.modo !== 'reglas') { el.innerHTML = ''; return; }
   if (!prVeCosto() && !veo('productos.precio')) { el.innerHTML = '<div class="card mini">Las reglas de precio las ve quien tiene permiso de ver el costo.</div>'; return; }
   el.innerHTML = '<div class="card mini">Cargando las reglas…</div>';
   const d = await cargarReglas();
@@ -2548,31 +2855,6 @@ function textoSugerido(sg, venta) {
   return `${plata(sg.sugerido)} <span class="mini">· ${esc(sg.regla)}: ${cuentaSugerido(sg)}, para arriba a ${redTxt(sg.redondeo)}${dif == null ? '' : Math.abs(dif) < 0.005 ? ' · igual al de hoy' : ` · ${dif > 0 ? '+' : ''}${dif.toLocaleString('es-AR', { maximumFractionDigits: 1 })} % contra el de hoy`}</span>`;
 }
 
-// Modo «📐 Por regla» de la pestaña Precios: la venta sugerida de cada artículo, con el redondeo que se elija
-function prRedondeo(u) {
-  PR.redondeo = u || null;
-  document.querySelectorAll('#pr-form [data-u]').forEach(b => b.classList.toggle('on', Number(b.dataset.u) === (u || 0)));
-  if (PR.modo === 'regla' && PR.filas.length) { aplicarRedondeoFilas(); pintarTablaPrecios(); }
-}
-function aplicarRedondeoFilas() {
-  for (const f of PR.filas) if (!f.mano && !f.aplicado && f.sug && f.sug.bruto != null) f.nuevo.venta = arribaA(Number(f.sug.bruto), PR.redondeo || Number(f.sug.redondeo) || 1);
-}
-async function armarRegla() {
-  const prov = document.getElementById('pr-prov').value, g = document.getElementById('pr-grupo').value, cat = document.getElementById('pr-cat').value;
-  const fuera = document.getElementById('pr-fuera').checked, disc = document.getElementById('pr-disc').checked;
-  if (!prov && !g && !fuera) return toast('Elegí un proveedor o un Nivel 1, o tildá «solo los que están fuera de regla».', 'error');
-  const el = document.getElementById('pr-tabla'); el.innerHTML = '<div class="empty">Calculando los sugeridos…</div>';
-  const { data, error } = await sb.rpc('productos_sugeridos', { p: { proveedor_codigo: prov || null, grupo: g || null, categoria: cat || null, solo_fuera: fuera, discontinuados: disc, limite: 6000 } });
-  if (error) { el.innerHTML = `<div class="alerta">${esc(errTxt(error))}</div>`; return; }
-  const filas = (data && data.filas) || [];
-  if (!filas.length) { el.innerHTML = `<div class="empty">${fuera ? '✅ Con ese filtro no hay artículos fuera de regla.' : 'No hay artículos con ese filtro.'}</div>`; return; }
-  PR.camposTabla = ['venta'];
-  PR.filas = filas.map(r => ({ sku: r.sku, desc: r.descripcion, prov: r.proveedor, disc: !!r.disc,
-    act: { venta: r.venta != null ? Number(r.venta) : null, costo: r.costo, costo_usd: r.costo_usd }, nuevo: { venta: null }, sug: r.sugerencia || null, error: null }));
-  aplicarRedondeoFilas();
-  pintarTablaPrecios();
-}
-
 // Sugerido en el alta: con el costo (o el costo en dólares) y la categoría del formulario
 let _sugT = null;
 function pedirSugeridoAlta() {
@@ -2599,7 +2881,7 @@ function pintarSugeridoAlta() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=34"></script>
+<script src="manual.js?v=35"></script>
 <script src="adorno-tablas.js?v=abc48a63"></script>
 </body>
 </html>
