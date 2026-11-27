@@ -1338,6 +1338,10 @@ const stk = v => (v == null || v === '') ? '<span class="stk cero">—</span>' :
 const catCorta = p => { const c = [p.grupo, p.categoria, p.clasificacion].filter(Boolean); return c.length ? `<span class="cat-ult" title="${esc(c.join(' › '))}">${esc(c[c.length - 1])}</span>` : '—'; };
 const _thOrd = (col, tx, cls) => { const on = PROD.orden.col === col; return `<th class="ord ${cls || ''}" onclick="ordenarLista('${col}')" title="Ordenar por ${tx.replace(/<[^>]+>/g, ' ').trim()}">${tx}${on ? `<span class="flecha">${PROD.orden.dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`; };
 const _tituloPrecio = () => ({ PRECIO: 'Precio venta', COSTO: 'Precio costo', COMPRA: 'Precio compra' })[PROD.listaPrecio] || ('Lista ' + esc(PROD.listaPrecio));
+// (27-nov-2026, JP: el filtro de «Stock A·U·O» «que sea para filtrar por local, no por cantidad») para el embudito, cada
+// artículo vale por los locales donde tiene stock (data-valores de adorno-tablas): Alcorta / Unicenter / Oficina / Sin stock
+const stockLocales = p => [['Alcorta', p.stock_alcorta], ['Unicenter', p.stock_unicenter], ['Oficina', p.stock_oficina]]
+  .filter(([, n]) => Number(n) > 0).map(([l]) => l).join('|') || 'Sin stock';
 function tablaProductos(lista) {
   if (!lista.length) return '<div class="empty">No hay artículos con ese criterio.</div>';
   if (PROD.vista === 'tarjetas') return `<div class="tarjetas">${lista.map(p => {
@@ -1371,7 +1375,7 @@ function tablaProductos(lista) {
       <td class="${compacta ? 'rec' : ''}" title="${compacta ? esc(p.descripcion || '') : ''}">${esc(p.descripcion || '')}${compacta ? ' ' + chipsProducto(p) : `<div style="margin-top:3px">${chipsProducto(p)}</div>`}</td>
       <td class="mini ${compacta ? 'rec prov' : ''}" title="${compacta ? esc(p.proveedor || '') : ''}">${esc(p.proveedor || '—')}</td>
       <td class="mini">${catCorta(p)}</td>
-      <td class="num">${stk(p.stock_alcorta)} · ${stk(p.stock_unicenter)} · ${stk(p.stock_oficina)}</td>
+      <td class="num" data-valores="${stockLocales(p)}">${stk(p.stock_alcorta)} · ${stk(p.stock_unicenter)} · ${stk(p.stock_oficina)}</td>
       <td class="num">${plata(precioDe(p))}</td>
     </tr>`).join('')}</tbody></table></div>`;
 }
@@ -2199,7 +2203,7 @@ function pintarFormPrecios() {
     const reglas = prOpcionesRegla();
     if (!reglas) PR.regla = '';
     el.innerHTML = `<div class="pr-form">
-      <label><span data-ayuda="Se arma la tabla con los artículos de ese proveedor (sin los discontinuados, salvo que tildes «con discontinuados»).">Proveedor</span><select id="pr-prov"><option value="">— elegí —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}"${PR.prov?.codigo === p.codigo ? ' selected' : ''}>${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select></label>
+      <label><span data-ayuda="Se arma la tabla con los artículos de ese proveedor (sin los discontinuados, salvo que tildes «con discontinuados»).">Proveedor</span><select id="pr-prov" onchange="prProvElegido()"><option value="">— elegí —</option>${v.proveedores.map(p => `<option value="${esc(p.codigo)}"${PR.prov?.codigo === p.codigo ? ' selected' : ''}>${esc(p.nombre || p.codigo)} (${esc(p.codigo)})</option>`).join('')}</select></label>
       <label><span data-ayuda="El aumento del proveedor (por ejemplo 8, o -5 para bajar). Va a la compra (precio contado) y el costo se recalcula solo. Después se puede cambiar el % de cada artículo en la tabla.">Aumento %</span><input id="pr-pct" inputmode="decimal" placeholder="8 · o -5" value="${PR.pct == null ? '' : esc(String(PR.pct).replace('.', ','))}" style="min-width:90px;width:100px" onchange="prOpcion()" onkeydown="if(event.key==='Enter') armarPct()"></label>
       <div class="pr-campos"><span class="mini" data-ayuda="«Compra → costo»: el % va a la lista de compra (precio contado) y el costo se calcula: compra menos el descuento del proveedor. «Venta»: la venta sube el mismo % (solo si abajo elegís «Sin regla»; con una regla, la venta sale de la regla).">Aplicar el % a:</span> ${campos.map(c => `<button type="button" class="fchip${PR.campos.includes(c) ? ' on' : ''}" data-c="${c}" onclick="campoPrecio('${c}')">${PR_CHIP[c]}</button>`).join(' ')}</div>
       <label class="pr-chk"><input type="checkbox" id="pr-disc"${PR.disc ? ' checked' : ''}> con discontinuados</label>
@@ -2209,6 +2213,7 @@ function pintarFormPrecios() {
       ${reglas ? `<label><span data-ayuda="Cómo sale el precio de venta nuevo: la regla de precio (por ejemplo costo × 3, con IVA incluido) calculada con el costo nuevo. «La de cada artículo» usa la que le corresponde a cada uno (proveedor, Nivel 3, 2, 1, general). En la columna «Regla» de la tabla se ve la de cada artículo y se cambia. Las reglas se arman en 📐 Reglas.">Regla</span><select id="pr-regla" onchange="prOpcion()">${reglas}</select></label>` : ''}
       <label><span data-ayuda="Cómo se redondea el precio de venta nuevo: para arriba al múltiplo que elijas. «El de la regla» = el redondeo que tiene cargado cada regla (sin regla, al peso).">Redondeo</span><select id="pr-red" onchange="prOpcion()">${REDONDEOS.map(u => `<option value="${u}"${(PR.redondeo || 0) === u ? ' selected' : ''}>${u ? 'para arriba a $ ' + u.toLocaleString('es-AR') : 'el de la regla / al peso'}</option>`).join('')}</select></label>
       <button class="pill-pri" onclick="armarPct()">Armar la tabla</button>
+      <span class="mini" id="pr-ult"></span>
     </div></div>`;
     prChipVenta();
   } else if (PR.modo === 'pegar') {
@@ -2220,6 +2225,21 @@ function pintarFormPrecios() {
   } else {
     el.innerHTML = '';
   }
+}
+// (27-nov, JP: «que la regla por default quede grabada por proveedor, según lo que se viene usando») al elegir el proveedor,
+// la regla y el redondeo de su último aumento (productos_aumento_ultimo; se anotan en la bitácora al grabar o bajar a Excel)
+async function prProvElegido() {
+  const prov = document.getElementById('pr-prov')?.value, nota = document.getElementById('pr-ult');
+  if (nota) nota.textContent = '';
+  if (!prov || !document.getElementById('pr-regla')) return;
+  const { data, error } = await sb.rpc('productos_aumento_ultimo', { p_prov: prov });
+  if (error || document.getElementById('pr-prov')?.value !== prov) return;
+  const sel = document.getElementById('pr-regla'), red = document.getElementById('pr-red');
+  const clave = !data ? 'auto' : data.regla_clave === 'sin' ? '' : data.regla_clave;
+  sel.value = [...sel.options].some(o => o.value === clave) ? clave : 'auto';
+  if (data && red && [...red.options].some(o => Number(o.value) === Number(data.redondeo || 0))) red.value = String(data.redondeo || 0);
+  prLeerOpciones(); prChipVenta();
+  if (nota && data) nota.textContent = `Regla y redondeo del último aumento de este proveedor (${fechaCorta(data.creado_at)})`;
 }
 function campoPrecio(c) {
   if (c === 'venta' && PR.regla && !PR.campos.includes('venta')) return toast('La venta sale de la regla. Para subir la venta un %, elegí «Sin regla» en «Precio de venta».');
@@ -2599,7 +2619,8 @@ function prCabecera() {
   const cambiadas = PR.modo === 'pct' ? PR.filas.filter(f => f.regla !== undefined && prParaAplicar(f)).length : 0;
   if (cambiadas) reglaTxt = (reglaTxt || 'sin regla') + ` (${cambiadas} con otra regla)`;
   return { modo: PR.modo === 'pegar' ? 'pegar' : 'pct', proveedor_codigo: PR.prov?.codigo || null, proveedor_nombre: PR.prov?.nombre || null,
-           pct: PR.modo === 'pct' ? PR.pct : null, redondeo: PR.modo === 'pct' && PR.redondeo ? PR.redondeo : null, regla: reglaTxt, campos: PR.camposTabla };
+           pct: PR.modo === 'pct' ? PR.pct : null, redondeo: PR.modo === 'pct' && PR.redondeo ? PR.redondeo : null, regla: reglaTxt, campos: PR.camposTabla,
+           regla_clave: PR.modo === 'pct' && document.getElementById('pr-regla') ? (PR.regla || 'sin') : null };
 }
 const prAhoraLocal = () => { const d = new Date(Date.now() - 3 * 3600e3); return d.toISOString().slice(0, 16); };   // Argentina (UTC−3)
 function resumenPrecios() {
@@ -2981,7 +3002,7 @@ function pintarSugeridoAlta() {
 }
 </script>
 <script src="juegos.js?v=7"></script>
-<script src="manual.js?v=36"></script>
-<script src="adorno-tablas.js?v=abc48a63"></script>
+<script src="manual.js?v=37"></script>
+<script src="adorno-tablas.js?v=fc267a1d"></script>
 </body>
 </html>
